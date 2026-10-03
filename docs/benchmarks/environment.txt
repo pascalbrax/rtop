@@ -1,0 +1,16 @@
+# M2 reference environment
+Kernel: 6.8.12-13-pve
+Architecture: x86_64
+Binary SHA256: 8cdaae57902e63abe5711373d2ba1e00eee845ab8b9e6ef55c26a2acfd54c97b
+Binary: rtop 0.1.0
+Toolchain: rustc 1.95.0 (59807616e 2026-04-14)
+Terminal: headless collector benchmark; no TUI / no emulator rendering
+Network namespace: net:[4026533404]
+Mount namespace: mnt:[4026532970]
+model name	: Intel(R) Xeon(R) CPU E5-2643 0 @ 3.30GHz
+CPU rows in /proc/stat: 16
+MemTotal:       131945980 kB
+Interfaces visible in benchmark: lo
+Cgroup: 0::/openrc.sshd
+GPU/driver: not collected or benchmarked in M2
+Container/sandbox: kernel counters may describe host resources; no cgroup quota normalization

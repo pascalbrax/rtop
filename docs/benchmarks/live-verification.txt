@@ -1,0 +1,5 @@
+PASS: RAM vs free -b; CPU vs vmstat (two near-aligned 1 s intervals, tolerance 5 pp)
+PASS: network vs ip -j -s (6 rows); disk vs sysfs (102 rows); root space vs df -B1
+PASS: rates vs counter deltas (1% tolerance for per-collector timestamp differences)
+CPU rtop: [29.62963, 27.226463] vmstat: [30.0, 27.0]
+Namespaces: net:[4026533030] mnt:[4026532948]

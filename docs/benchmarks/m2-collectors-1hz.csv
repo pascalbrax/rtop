@@ -1,0 +1,4 @@
+run,wall_s,cpu_percent_one_core,samples,timer_wakeups,missed_deadlines,voluntary_switches,involuntary_switches,rss_start_kib,rss_end_kib,max_rss_kib,collection_p50_us,collection_p95_us,collection_max_us,cpu_mean_us,memory_mean_us,load_mean_us,network_mean_us,disk_mean_us,fs_refreshes,fs_mean_us,errors
+1,300.000094,0.123145,300,300,0,300,18,2944,2944,2944,1125,1988,3363,250,80,32,153,658,10,433,0
+2,300.000121,0.128692,300,300,0,300,13,2944,2944,2944,1262,1934,3445,251,72,30,172,703,10,357,0
+3,300.000089,0.137812,300,300,0,300,16,2944,2944,2944,1284,2037,4570,275,77,31,174,761,9,426,0

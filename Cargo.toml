@@ -1,0 +1,14 @@
+[package]
+name = "rtop"
+version = "0.1.0"
+edition = "2024"
+description = "A low-overhead Linux terminal monitor — visual prototype"
+license = "MIT"
+
+[dependencies]
+ratatui = "0.29"
+crossterm = "0.28"
+clap = { version = "4.6", features = ["derive"] }
+libc = "0.2"
+serde = { version = "1", features = ["derive"] }
+toml = "0.9"

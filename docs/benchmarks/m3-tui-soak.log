@@ -1,0 +1,98 @@
+elapsed=30s CPU=0.08s RSS=3840KiB threads=3
+elapsed=90s CPU=0.27s RSS=3840KiB threads=3
+elapsed=150s CPU=0.48s RSS=3840KiB threads=3
+elapsed=210s CPU=0.68s RSS=3840KiB threads=3
+elapsed=270s CPU=0.88s RSS=3840KiB threads=3
+elapsed=330s CPU=1.06s RSS=3840KiB threads=3
+elapsed=390s CPU=1.25s RSS=3840KiB threads=3
+elapsed=450s CPU=1.44s RSS=3840KiB threads=3
+elapsed=510s CPU=1.66s RSS=3840KiB threads=3
+elapsed=570s CPU=1.86s RSS=3840KiB threads=3
+elapsed=630s CPU=2.05s RSS=3840KiB threads=3
+elapsed=690s CPU=2.25s RSS=3840KiB threads=3
+elapsed=750s CPU=2.45s RSS=3840KiB threads=3
+elapsed=810s CPU=2.64s RSS=3840KiB threads=3
+elapsed=870s CPU=2.82s RSS=3840KiB threads=3
+elapsed=930s CPU=3.02s RSS=3840KiB threads=3
+elapsed=990s CPU=3.21s RSS=3840KiB threads=3
+elapsed=1050s CPU=3.40s RSS=3840KiB threads=3
+elapsed=1110s CPU=3.60s RSS=3840KiB threads=3
+elapsed=1170s CPU=3.79s RSS=3840KiB threads=3
+elapsed=1230s CPU=3.98s RSS=3840KiB threads=3
+elapsed=1290s CPU=4.18s RSS=3840KiB threads=3
+elapsed=1350s CPU=4.36s RSS=3840KiB threads=3
+elapsed=1410s CPU=4.58s RSS=3840KiB threads=3
+elapsed=1470s CPU=4.79s RSS=3840KiB threads=3
+elapsed=1530s CPU=4.98s RSS=3840KiB threads=3
+elapsed=1590s CPU=5.18s RSS=3840KiB threads=3
+elapsed=1650s CPU=5.38s RSS=3840KiB threads=3
+elapsed=1710s CPU=5.59s RSS=3840KiB threads=3
+elapsed=1770s CPU=5.77s RSS=3840KiB threads=3
+elapsed=1830s CPU=5.96s RSS=3840KiB threads=3
+elapsed=1890s CPU=6.13s RSS=3840KiB threads=3
+elapsed=1950s CPU=6.35s RSS=3840KiB threads=3
+elapsed=2010s CPU=6.56s RSS=3840KiB threads=3
+elapsed=2070s CPU=6.77s RSS=3840KiB threads=3
+elapsed=2130s CPU=6.97s RSS=3840KiB threads=3
+elapsed=2190s CPU=7.17s RSS=3840KiB threads=3
+elapsed=2250s CPU=7.37s RSS=3840KiB threads=3
+elapsed=2310s CPU=7.56s RSS=3840KiB threads=3
+elapsed=2370s CPU=7.74s RSS=3840KiB threads=3
+elapsed=2430s CPU=7.93s RSS=3840KiB threads=3
+elapsed=2490s CPU=8.11s RSS=3840KiB threads=3
+elapsed=2550s CPU=8.31s RSS=3840KiB threads=3
+elapsed=2610s CPU=8.51s RSS=3840KiB threads=3
+elapsed=2670s CPU=8.73s RSS=3840KiB threads=3
+elapsed=2730s CPU=8.93s RSS=3840KiB threads=3
+elapsed=2790s CPU=9.13s RSS=3840KiB threads=3
+elapsed=2850s CPU=9.31s RSS=3840KiB threads=3
+elapsed=2910s CPU=9.51s RSS=3840KiB threads=3
+elapsed=2970s CPU=9.68s RSS=3840KiB threads=3
+elapsed=3030s CPU=9.89s RSS=3840KiB threads=3
+elapsed=3090s CPU=10.09s RSS=3840KiB threads=3
+elapsed=3150s CPU=10.30s RSS=3840KiB threads=3
+elapsed=3210s CPU=10.52s RSS=3840KiB threads=3
+elapsed=3270s CPU=10.72s RSS=3840KiB threads=3
+elapsed=3330s CPU=10.93s RSS=3840KiB threads=3
+elapsed=3390s CPU=11.13s RSS=3840KiB threads=3
+elapsed=3450s CPU=11.32s RSS=3840KiB threads=3
+elapsed=3510s CPU=11.54s RSS=3840KiB threads=3
+elapsed=3570s CPU=11.74s RSS=3840KiB threads=3
+elapsed=3630s CPU=11.96s RSS=3840KiB threads=3
+{
+  "binary_sha256": "509e6638339f2da3a7db0e8aca5e7baf879cf56d3b412e347ff24d6969ea440f",
+  "measured_wall_s": 3600.000066883862,
+  "cpu_percent_one_core": 0.32999999386897944,
+  "rss_start_kib": 3840,
+  "rss_end_kib": 3840,
+  "rss_tail_range_kib": 0,
+  "threads_max": 3,
+  "output_bytes": 4611760,
+  "benchmark_windows": [
+    {
+      "run": 1,
+      "wall_s": 299.9996775351465,
+      "cpu_percent_one_core": 0.32666701779544016,
+      "rss_start_kib": 3840,
+      "rss_end_kib": 3840
+    },
+    {
+      "run": 2,
+      "wall_s": 300.00032146275043,
+      "cpu_percent_one_core": 0.33999963567593994,
+      "rss_start_kib": 3840,
+      "rss_end_kib": 3840
+    },
+    {
+      "run": 3,
+      "wall_s": 300.0002820417285,
+      "cpu_percent_one_core": 0.3199996991557724,
+      "rss_start_kib": 3840,
+      "rss_end_kib": 3840
+    }
+  ],
+  "restored_terminal": true,
+  "clock_ticks_per_second": 100,
+  "net_namespace": "net:[4026533480]",
+  "terminal": "drained PTY, 120x40, truecolor, 1 Hz; no graphical terminal emulator"
+}

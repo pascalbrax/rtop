@@ -1,0 +1,25 @@
+ rtop / observatory     SIMULATED DATA                                          
+ linux-demo   |   8 cores   |   sample 0000   |   DEMO RUNNING                  
+ 1 CPU   2 GPU   3 Memory   4 Storage   5 Network   6 Thermals   7 Processes    
+                                                                                
++ 1 CPU -----------------------------------------------------------------------+
+|# # # # # # # # . . . . . . . . . . . . . . . . . . . . . . . . . . . .  24%  |
+| 24%  total     3.42 GHz                                                      |
+|Load   1.42 / 1.18 / 0.96                                                     |
+|Cores  24  38  62  17  45  28  31  19 %                                       |
+|8 logical cores / demo processor                                              |
+|Demo history / normalized                                                     |
+|...:...:......:...:.######...:...######.:......:.#######..:.                  |
+|                                                                              |
+|                                                                              |
+|                                                                              |
+|                                                                              |
+|                                                                              |
+|                                                                              |
+|                                                                              |
+|                                                                              |
+|                                                                              |
++------------------------------------------------------------------------------+
+ q quit  ? help  Tab select  Enter focus  Space pause                           
+ t theme   a ASCII   c color   |   Prototype M1 / no hardware collected         
+

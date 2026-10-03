@@ -1,0 +1,16 @@
+{
+  "binary_sha256": "438429873a0a37059fe8da30ef6f8d67033cfdbf693de0b31baa78409f8d8133",
+  "measured_wall_s": 30.00154246017337,
+  "cpu_percent_one_core": 0.23332133703766744,
+  "rss_start_kib": 3968,
+  "rss_end_kib": 3968,
+  "rss_tail_range_kib": 0,
+  "threads_max": 3,
+  "output_bytes": 19871,
+  "benchmark_windows": [],
+  "restored_terminal": true,
+  "clock_ticks_per_second": 100,
+  "net_namespace": "net:[4026533480]",
+  "terminal": "drained PTY, 120x40, truecolor, 1 Hz; no graphical terminal emulator",
+  "diagnostic_note": "Short diagnostic run inherited NO_COLOR; superseded by m3-tui-soak.json truecolor acceptance run."
+}
