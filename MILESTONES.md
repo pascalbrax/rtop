@@ -61,14 +61,15 @@
 - [x] Gestire librerie assenti, GPU non supportate, permessi mancanti e dispositivi rimossi.
 - [x] Implementare `doctor` con backend, dispositivi e ragioni delle metriche mancanti.
 - [x] Aggiungere discovery Intel `i915`/`xe` e backend opzionale Level Zero Sysman.
-- [ ] Completare confronto delle metriche e benchmark NVIDIA T1000 su Debian; registrare versioni driver.
+- [x] Confermare su Debian discovery e disponibilità di utilizzo, VRAM e temperatura NVIDIA T1000 8GB; potenza non supportata gestita.
+- [ ] Completare confronto delle metriche sotto carico e benchmark NVIDIA T1000 su Debian; registrare versioni driver.
 - [ ] Validare Intel Arc su Fedora; identificare modello, driver e runtime.
 - [ ] Validare AMD reale e registrarne driver/modello — **in sospeso su richiesta dell'utente**.
 - [ ] Misurare il costo aggiuntivo di ogni backend GPU e dei sensori.
 
 **Completamento:** validazione hardware documentata, nessun subprocess periodico e nessun blocco della UI durante errori del backend. Se l'hardware non è disponibile, lasciare la relativa validazione aperta: i test simulati non la sostituiscono. Pubblicare consumo e limiti della dashboard completa.
 
-**Verifica locale M4:** implementazione e test senza GPU disponibili in [M4-VERIFICATION.md](docs/M4-VERIFICATION.md). 15 test Rust e regressioni hardware passano; sessione integrata da 1000 s: CPU 0,408% di un core, RSS finale 4352 KiB, p95 input-render 4,97 ms. Sensori e percorso senza backend misurati in tre run da 300 s. Riconoscimento NVIDIA T1000 su Debian confermato dall'utente il 4 ottobre 2026. Backend Intel implementato e verificato con fixture `i915`/`xe`: [verifica Intel](docs/INTEL-VERIFICATION.md). Test Intel reale previsto su Fedora, modello da identificare e driver probabilmente `xe`. Confronto delle metriche, versioni e benchmark GPU restano aperti; la validazione AMD reale è in sospeso su richiesta dell'utente.
+**Verifica locale M4:** implementazione e test senza GPU disponibili in [M4-VERIFICATION.md](docs/M4-VERIFICATION.md). 15 test Rust e regressioni hardware passano; sessione integrata da 1000 s: CPU 0,408% di un core, RSS finale 4352 KiB, p95 input-render 4,97 ms. Sensori e percorso senza backend misurati in tre run da 300 s. Discovery e lettura di utilizzo, VRAM e temperatura NVIDIA T1000 8GB su Debian confermate dall'utente il 4 ottobre 2026; potenza non supportata gestita. Backend Intel implementato e verificato con fixture `i915`/`xe`: [verifica Intel](docs/INTEL-VERIFICATION.md). Test Intel reale previsto su Fedora, modello da identificare e driver probabilmente `xe`. Confronto delle metriche, versioni e benchmark GPU restano aperti; la validazione AMD reale è in sospeso su richiesta dell'utente.
 
 ## M5 — Processi e interazione stile top/htop
 

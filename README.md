@@ -8,7 +8,7 @@ La dashboard mostra **CPU, RAM, rete e dischi reali**. GPU NVIDIA/AMD/Intel e te
 
 ## Stato e prestazioni
 
-M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le fixture NVIDIA/AMD passano, un utente ha confermato il riconoscimento di una NVIDIA T1000 su Debian. Intel `i915`/`xe` è supportato tramite Level Zero Sysman, in attesa del test su Fedora. Restano confronto delle metriche e benchmark GPU; il test AMD reale è in sospeso su richiesta dell'utente. La raccolta dei processi è prevista in M5. Il pannello processi occupa metà della fascia centrale, accanto alla memoria.
+M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le fixture NVIDIA/AMD passano, un utente ha confermato su Debian discovery, utilizzo, VRAM e temperatura di una NVIDIA T1000 8GB; la potenza risulta non supportata. Intel `i915`/`xe` è supportato tramite Level Zero Sysman, in attesa del test su Fedora. Restano confronto delle metriche e benchmark GPU; il test AMD reale è in sospeso su richiesta dell'utente. La raccolta dei processi è prevista in M5. Il pannello processi occupa metà della fascia centrale, accanto alla memoria.
 
 | Misura su PTY, collector base a 1 Hz | M3: base | M4: base + sensori CPU |
 | --- | --- | --- |

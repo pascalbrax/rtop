@@ -1,6 +1,6 @@
 # M4 — GPU e temperature
 
-Implementazione e verifiche locali del 4 ottobre 2026. La validazione completa su GPU NVIDIA e AMD reali resta aperta. Nella macchina locale è presente una Matrox, senza backend supportato; un test utente su Debian ha confermato il riconoscimento di una NVIDIA T1000.
+Implementazione e verifiche locali del 4 ottobre 2026. La validazione completa su GPU reali resta aperta; il test AMD è in sospeso su richiesta dell’utente. Nella macchina locale è presente una Matrox, senza backend supportato; un test utente su Debian ha confermato discovery e lettura delle metriche di una NVIDIA T1000 8GB.
 
 ## Comportamento
 
@@ -99,9 +99,20 @@ La breve sessione diagnostica precedente all'accorpamento dei frame è stata int
 
 ### Test hardware riportato dall'utente
 
-Segnalazione ricevuta il 4 ottobre 2026: su un PC Debian, una **NVIDIA T1000 è stata riconosciuta**. Questa è una verifica di discovery su hardware reale riportata dall'utente, non riprodotta nell'ambiente locale.
+Output `rtop doctor` ricevuto il 4 ottobre 2026 da un PC Debian con **NVIDIA T1000 8GB**, backend NVML. È un risultato su hardware reale riportato dall'utente, non riprodotto nell'ambiente locale.
 
-Versione Debian, versione driver NVIDIA e versione/commit del binario non sono stati comunicati. Non sono ancora documentati disponibilità e confronto di utilizzo, VRAM, temperatura e potenza, né durata del test e consumo CPU/RAM su questo PC. Il riconoscimento non chiude questi controlli.
+| Metrica | Risultato riportato |
+| --- | --- |
+| Utilizzo | `Ok(0.0)` — 0% nel campione |
+| VRAM usata / totale | `425394176 / 8589934592` byte — circa 406 MiB / 8 GiB |
+| Temperatura GPU core | `Ok(46.0)` °C, soglia critica non disponibile |
+| Potenza | `Err("Not Supported")`, indisponibilità gestita |
+| GPU/discovery | 32,680 ms nella singola esecuzione di doctor |
+| Sensori separati | 0,000 ms; temperatura GPU già letta tramite NVML |
+
+Il secondo dispositivo DRM (`card0`, vendor/device `0x1234 / 0x1111`) non ha un backend supportato: le query riportano errori locali senza impedire la lettura della T1000. Non viene attribuito un modello a questo dispositivo dal solo output.
+
+La disponibilità di utilizzo, VRAM e temperatura è confermata. Il campione a 0% non verifica la risposta sotto carico; non è ancora disponibile un confronto con uno strumento di riferimento. La durata di doctor include la discovery e non misura il costo dei campioni periodici o il consumo CPU del monitor. Versione Debian, driver NVIDIA, versione/commit del binario, durata del test e benchmark CPU/RAM restano da documentare.
 
 M4 non è segnata come completata: restano la validazione delle metriche e il benchmark NVIDIA e il test Intel reale su Fedora. Il test AMD reale è in sospeso su richiesta dell'utente. Il backend Intel e le sue verifiche sono documentati in [INTEL-VERIFICATION.md](INTEL-VERIFICATION.md). Le fixture ABI/sysfs verificano la logica e gli errori, ma non sostituiscono questa validazione hardware. Nessun risultato di consumo viene esteso ai futuri collector processi di M5.
 
