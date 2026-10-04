@@ -65,7 +65,7 @@
 
 **Completamento:** validazione hardware documentata, nessun subprocess periodico e nessun blocco della UI durante errori del backend. Se l'hardware non è disponibile, lasciare la relativa validazione aperta: i test simulati non la sostituiscono. Pubblicare consumo e limiti della dashboard completa.
 
-**Verifica locale M4:** implementazione e test senza GPU disponibili in [M4-VERIFICATION.md](docs/M4-VERIFICATION.md). 15 test Rust e regressioni hardware passano; sessione integrata da 1000 s: CPU 0,408% di un core, RSS finale 4352 KiB, p95 input-render 4,97 ms. Sensori e percorso senza backend misurati in tre run da 300 s. Validazione NVIDIA/AMD reale e relativi benchmark restano aperti.
+**Verifica locale M4:** implementazione e test senza GPU disponibili in [M4-VERIFICATION.md](docs/M4-VERIFICATION.md). 15 test Rust e regressioni hardware passano; sessione integrata da 1000 s: CPU 0,408% di un core, RSS finale 4352 KiB, p95 input-render 4,97 ms. Sensori e percorso senza backend misurati in tre run da 300 s. Riconoscimento NVIDIA T1000 su Debian confermato dall'utente il 4 ottobre 2026. Confronto delle metriche, versioni driver, benchmark GPU e validazione AMD reale restano aperti.
 
 ## M5 — Processi e interazione stile top/htop
 

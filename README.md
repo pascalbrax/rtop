@@ -8,7 +8,7 @@ La dashboard mostra **CPU, RAM, rete e dischi reali**. GPU NVIDIA/AMD e temperat
 
 ## Stato e prestazioni
 
-M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le fixture NVIDIA/AMD passano, mentre serve ancora la verifica su GPU NVIDIA e AMD reali. La raccolta dei processi è prevista in M5. Il pannello processi occupa metà della fascia centrale, accanto alla memoria.
+M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le fixture NVIDIA/AMD passano, un utente ha confermato il riconoscimento di una NVIDIA T1000 su Debian. Restano il confronto delle metriche, i benchmark GPU e la verifica AMD reale. La raccolta dei processi è prevista in M5. Il pannello processi occupa metà della fascia centrale, accanto alla memoria.
 
 | Misura su PTY, collector base a 1 Hz | M3: base | M4: base + sensori CPU |
 | --- | --- | --- |

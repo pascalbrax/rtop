@@ -1,6 +1,6 @@
 # M4 — GPU e temperature
 
-Implementazione e verifiche locali del 4 ottobre 2026. La validazione su GPU NVIDIA e AMD reali resta aperta: nella macchina disponibile è presente una Matrox, senza backend supportato.
+Implementazione e verifiche locali del 4 ottobre 2026. La validazione completa su GPU NVIDIA e AMD reali resta aperta. Nella macchina locale è presente una Matrox, senza backend supportato; un test utente su Debian ha confermato il riconoscimento di una NVIDIA T1000.
 
 ## Comportamento
 
@@ -97,7 +97,13 @@ python3 tests/tui_latency.py --output docs/benchmarks/m4-input-latency.json
 
 La breve sessione diagnostica precedente all'accorpamento dei frame è stata interrotta; i report qui collegati sono della build finale.
 
-M4 non è segnata come completata: mancano almeno una GPU NVIDIA e una AMD reali, relativi modelli/versioni driver, confronto delle metriche e costo aggiuntivo dei backend funzionanti. Le fixture ABI/sysfs verificano la logica e gli errori, ma non sostituiscono questa validazione hardware. Nessun risultato di consumo viene esteso ai futuri collector processi di M5.
+### Test hardware riportato dall'utente
+
+Segnalazione ricevuta il 4 ottobre 2026: su un PC Debian, una **NVIDIA T1000 è stata riconosciuta**. Questa è una verifica di discovery su hardware reale riportata dall'utente, non riprodotta nell'ambiente locale.
+
+Versione Debian, versione driver NVIDIA e versione/commit del binario non sono stati comunicati. Non sono ancora documentati disponibilità e confronto di utilizzo, VRAM, temperatura e potenza, né durata del test e consumo CPU/RAM su questo PC. Il riconoscimento non chiude questi controlli.
+
+M4 non è segnata come completata: restano la validazione delle metriche e il benchmark NVIDIA, la verifica su AMD reale e le relative versioni dei driver. Le fixture ABI/sysfs verificano la logica e gli errori, ma non sostituiscono questa validazione hardware. Nessun risultato di consumo viene esteso ai futuri collector processi di M5.
 
 ## Riferimenti delle interfacce
 
