@@ -322,58 +322,21 @@ fn chart(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, ac
         );
         return;
     }
-    let dim = blend(accent, p.surface, 0.17);
-    let grid = [
-        vec![(-window.as_secs_f64(), maximum * 0.5), (0., maximum * 0.5)],
-        vec![
-            (-window.as_secs_f64() * 0.5, 0.),
-            (-window.as_secs_f64() * 0.5, maximum),
-        ],
-    ];
-    let mut sets: Vec<_> = grid
-        .iter()
-        .map(|v| {
-            Dataset::default()
-                .graph_type(GraphType::Line)
-                .marker(ratatui::symbols::Marker::Braille)
-                .style(Style::default().fg(dim))
-                .data(v)
-        })
-        .collect();
-    for parts in [&first, &second] {
-        for segment in parts {
-            sets.push(
-                Dataset::default()
-                    .graph_type(if segment.len() == 1 {
-                        GraphType::Scatter
-                    } else {
-                        GraphType::Line
-                    })
-                    .marker(ratatui::symbols::Marker::Braille)
-                    .style(Style::default().fg(if std::ptr::eq(parts, &first) {
-                        accent
-                    } else {
-                        blend(accent, p.fg, 0.65)
-                    }))
-                    .data(segment),
-            );
-        }
-    }
+    let regions = Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).split(area);
     frame.render_widget(
-        Chart::new(sets)
-            .block(Block::default().title(Span::styled(title, Style::default().fg(p.muted))))
-            .x_axis(
-                Axis::default()
-                    .bounds([-window.as_secs_f64(), 0.])
-                    .style(Style::default().fg(dim)),
-            )
-            .y_axis(
-                Axis::default()
-                    .bounds([0., maximum])
-                    .style(Style::default().fg(dim)),
-            )
-            .style(Style::default().bg(p.surface)),
-        area,
+        Paragraph::new(title).style(Style::default().fg(p.muted)),
+        regions[0],
+    );
+    frame.render_widget(
+        area_chart::AreaChart {
+            first: &first,
+            second: &second,
+            x_bounds: [-window.as_secs_f64(), 0.],
+            maximum,
+            accent,
+            palette: p,
+        },
+        regions[1],
     );
 }
 

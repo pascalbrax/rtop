@@ -81,9 +81,11 @@ cargo build --release
 
 Da 100×32 è visibile la dashboard completa. Nei terminali più piccoli viene mostrata la sezione selezionata. Dimensione minima: 60×18; sotto questa soglia appare un messaggio, con uscita sempre disponibile.
 
-Il tema riprende il riferimento grafico fornito: sfondo antracite, superfici scure, colori luminosi, barre segmentate e grafici a linee con griglia tenue. La dashboard dispone CPU/GPU in alto, RAM e processi affiancati e dischi/rete/temperature nella fascia inferiore.
+Il tema riprende il riferimento grafico fornito: sfondo antracite, superfici scure, colori luminosi, barre segmentate e grafici ad area con contorno luminoso e riempimento scuro. La dashboard dispone CPU/GPU in alto, RAM e processi affiancati e dischi/rete/temperature nella fascia inferiore.
 
 Ogni sezione ha un colore coerente su tab, titolo, bordo e grafico: CPU verde, GPU blu, RAM viola, dischi verde acqua, rete ciano, temperature ambra e processi giallo. Il tema chiaro usa varianti più scure per mantenere il contrasto; la selezione è indicata anche dalla sottolineatura. La modalità senza colore mantiene etichette e indicatore di selezione. L'effetto luminoso deriva dal contrasto statico: non ci sono animazioni o cicli di rendering aggiuntivi.
+
+I grafici Unicode usano blocchi pieni e mezzi blocchi (`█▀▄`), più visibili dei punti Braille. Disco e rete sovrappongono la seconda serie come linea chiara; in modalità senza colore resta il contorno, in ASCII lo storico compatto. Anteprima con dati simulati: [grafici ad area](docs/previews/area-dark-120x40.svg). [Verifiche del renderer](docs/AREA-CHART-VERIFICATION.md).
 
 Le serie reali hanno timestamp monotoni, unità e scale esplicite; lo storico contiene 120 campioni per default. Errori, reset e lacune temporali interrompono le curve; alla ripresa dalla pausa le basi delle velocità vengono reinizializzate. Le serie demo conservano una scala normalizzata.
 

@@ -1,3 +1,4 @@
+mod area_chart;
 mod live;
 use crate::app::{App, SECTIONS};
 use ratatui::{
@@ -6,9 +7,7 @@ use ratatui::{
     layout::{Constraint, Layout, Rect},
     style::{Color, Modifier, Style, Stylize},
     text::{Line, Span},
-    widgets::{
-        Axis, Block, Borders, Chart, Clear, Dataset, GraphType, Paragraph, Row, Table, Tabs, Wrap,
-    },
+    widgets::{Block, Borders, Clear, Paragraph, Row, Table, Tabs, Wrap},
 };
 const ASCII_BORDER: ratatui::symbols::border::Set = ratatui::symbols::border::Set {
     top_left: "+",
@@ -467,51 +466,21 @@ fn trace(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette) {
             (i as f64, normalized as f64)
         })
         .collect();
-    let grid = blend(accent, p.surface, 0.17);
-    let horizontal: Vec<Vec<(f64, f64)>> = [25.0, 50.0, 75.0]
-        .into_iter()
-        .map(|y| vec![(0.0, y), (59.0, y)])
-        .collect();
-    let vertical: Vec<Vec<(f64, f64)>> = [10.0, 20.0, 30.0, 40.0, 50.0]
-        .into_iter()
-        .map(|x| vec![(x, 0.0), (x, 100.0)])
-        .collect();
-    let mut datasets: Vec<Dataset> = horizontal
-        .iter()
-        .chain(vertical.iter())
-        .map(|points| {
-            Dataset::default()
-                .graph_type(GraphType::Line)
-                .marker(ratatui::symbols::Marker::Braille)
-                .style(Style::default().fg(grid))
-                .data(points)
-        })
-        .collect();
-    datasets.push(
-        Dataset::default()
-            .graph_type(GraphType::Line)
-            .marker(ratatui::symbols::Marker::Braille)
-            .style(Style::default().fg(accent))
-            .data(&values),
+    let regions = Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).split(area);
+    frame.render_widget(
+        Paragraph::new("Demo history / normalized").style(Style::default().fg(p.muted)),
+        regions[0],
     );
     frame.render_widget(
-        Chart::new(datasets)
-            .block(Block::default().title(Span::styled(
-                "Demo history / normalized",
-                Style::default().fg(p.muted),
-            )))
-            .x_axis(
-                Axis::default()
-                    .bounds([0.0, 59.0])
-                    .style(Style::default().fg(grid)),
-            )
-            .y_axis(
-                Axis::default()
-                    .bounds([0.0, 100.0])
-                    .style(Style::default().fg(grid)),
-            )
-            .style(Style::default().bg(p.surface)),
-        area,
+        area_chart::AreaChart {
+            first: &[values],
+            second: &[],
+            x_bounds: [0., 59.],
+            maximum: 100.,
+            accent,
+            palette: p,
+        },
+        regions[1],
     );
 }
 pub fn buffer_text(buffer: &Buffer) -> String {
@@ -557,7 +526,16 @@ pub fn buffer_svg(buffer: &Buffer) -> String {
                 x as u32 * 9,
                 y as u32 * 18
             );
-            if symbol != " " {
+            if matches!(symbol.as_str(), "█" | "▀" | "▄") {
+                let offset = if symbol == "▄" { 9 } else { 0 };
+                let height = if symbol == "█" { 18 } else { 9 };
+                let _ = writeln!(
+                    svg,
+                    "<rect x=\"{}\" y=\"{}\" width=\"9\" height=\"{height}\" fill=\"{fg}\"/>",
+                    x as u32 * 9,
+                    y as u32 * 18 + offset
+                );
+            } else if symbol != " " {
                 let weight = if cell.modifier.contains(Modifier::BOLD) {
                     "bold"
                 } else {

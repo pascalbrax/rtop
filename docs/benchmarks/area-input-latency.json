@@ -1,0 +1,8 @@
+{
+  "samples": 40,
+  "p50_ms": 1.3933293521404266,
+  "p95_ms": 2.135924994945526,
+  "max_ms": 2.464164048433304,
+  "history_warmup_s": 125.0,
+  "method": "theme key to target palette plus end-of-frame cursor-hide sequence, 120x40 drained PTY; live collectors"
+}
