@@ -1,0 +1,54 @@
+elapsed=30s CPU=0.11s RSS=4224KiB threads=4
+elapsed=90s CPU=0.33s RSS=4224KiB threads=4
+elapsed=150s CPU=0.57s RSS=4224KiB threads=4
+elapsed=210s CPU=0.84s RSS=4224KiB threads=4
+elapsed=270s CPU=1.10s RSS=4224KiB threads=4
+elapsed=330s CPU=1.34s RSS=4224KiB threads=4
+elapsed=390s CPU=1.59s RSS=4224KiB threads=4
+elapsed=450s CPU=1.83s RSS=4352KiB threads=4
+elapsed=510s CPU=2.06s RSS=4352KiB threads=4
+elapsed=570s CPU=2.32s RSS=4352KiB threads=4
+elapsed=630s CPU=2.59s RSS=4352KiB threads=4
+elapsed=690s CPU=2.81s RSS=4352KiB threads=4
+elapsed=750s CPU=3.06s RSS=4352KiB threads=4
+elapsed=810s CPU=3.30s RSS=4352KiB threads=4
+elapsed=870s CPU=3.54s RSS=4352KiB threads=4
+elapsed=930s CPU=3.77s RSS=4352KiB threads=4
+elapsed=990s CPU=4.02s RSS=4352KiB threads=4
+{
+  "binary_sha256": "e658322a46d78c52fc433322c9f3ce09e31201a3f9a1c7e74ff307970ab092ac",
+  "measured_wall_s": 1000.0041700750589,
+  "cpu_percent_one_core": 0.40799829861647086,
+  "rss_start_kib": 4224,
+  "rss_end_kib": 4352,
+  "rss_tail_range_kib": 128,
+  "threads_max": 4,
+  "output_bytes": 2058969,
+  "benchmark_windows": [
+    {
+      "run": 1,
+      "wall_s": 299.99952963739634,
+      "cpu_percent_one_core": 0.41000064282989956,
+      "rss_start_kib": 4224,
+      "rss_end_kib": 4224
+    },
+    {
+      "run": 2,
+      "wall_s": 299.9997629337013,
+      "cpu_percent_one_core": 0.4100003239908643,
+      "rss_start_kib": 4224,
+      "rss_end_kib": 4352
+    },
+    {
+      "run": 3,
+      "wall_s": 300.0000237748027,
+      "cpu_percent_one_core": 0.40333330136943435,
+      "rss_start_kib": 4352,
+      "rss_end_kib": 4352
+    }
+  ],
+  "restored_terminal": true,
+  "clock_ticks_per_second": 100,
+  "net_namespace": "net:[4026533406]",
+  "terminal": "drained PTY, 120x40, truecolor, 1 Hz; no graphical terminal emulator"
+}

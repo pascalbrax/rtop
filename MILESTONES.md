@@ -1,6 +1,6 @@
 # Milestone
 
-**M1 e M2 completate il 3 ottobre 2026** (`rtop 0.1.0`); **M3 completata il 4 ottobre 2026**; M4–M6 sono da avviare. Risultati M2: [collector e benchmark](docs/M2-VERIFICATION.md). Evidenze e limiti: [verifica M1](docs/M1-VERIFICATION.md). Questo documento definisce risultati e criteri di completamento. Visione e vincoli sono in [ROADMAP.md](ROADMAP.md).
+**M1 e M2 completate il 3 ottobre 2026** (`rtop 0.1.0`); **M3 completata il 4 ottobre 2026**; M4 è implementata e in validazione hardware; M5–M6 sono da avviare. Risultati M2: [collector e benchmark](docs/M2-VERIFICATION.md). Evidenze e limiti: [verifica M1](docs/M1-VERIFICATION.md). Questo documento definisce risultati e criteri di completamento. Visione e vincoli sono in [ROADMAP.md](ROADMAP.md).
 
 ## M1 — Design e prototipo visivo
 
@@ -54,16 +54,18 @@
 
 **Risultato:** pannelli GPU e sensori con supporto esplicito delle capacità disponibili.
 
-- [ ] Implementare discovery e backend NVIDIA via NVML caricato a runtime.
-- [ ] Implementare backend AMD tramite interfacce disponibili del driver.
-- [ ] Scoprire sensori CPU/GPU preservando dispositivo, etichette e tipo di temperatura.
-- [ ] Integrare thermal zones come fallback senza attribuzioni arbitrarie alla CPU.
-- [ ] Gestire librerie assenti, GPU non supportate, permessi mancanti e dispositivi rimossi.
-- [ ] Implementare `doctor` con backend, dispositivi e ragioni delle metriche mancanti.
+- [x] Implementare discovery e backend NVIDIA via NVML caricato a runtime.
+- [x] Implementare backend AMD tramite interfacce disponibili del driver.
+- [x] Scoprire sensori CPU/GPU preservando dispositivo, etichette e tipo di temperatura.
+- [x] Integrare thermal zones come fallback senza attribuzioni arbitrarie alla CPU.
+- [x] Gestire librerie assenti, GPU non supportate, permessi mancanti e dispositivi rimossi.
+- [x] Implementare `doctor` con backend, dispositivi e ragioni delle metriche mancanti.
 - [ ] Validare su almeno una GPU NVIDIA e una AMD; registrare i modelli e le versioni driver.
 - [ ] Misurare il costo aggiuntivo di ogni backend GPU e dei sensori.
 
 **Completamento:** validazione hardware documentata, nessun subprocess periodico e nessun blocco della UI durante errori del backend. Se l'hardware non è disponibile, lasciare la relativa validazione aperta: i test simulati non la sostituiscono. Pubblicare consumo e limiti della dashboard completa.
+
+**Verifica locale M4:** implementazione e test senza GPU disponibili in [M4-VERIFICATION.md](docs/M4-VERIFICATION.md). 15 test Rust e regressioni hardware passano; sessione integrata da 1000 s: CPU 0,408% di un core, RSS finale 4352 KiB, p95 input-render 4,97 ms. Sensori e percorso senza backend misurati in tre run da 300 s. Validazione NVIDIA/AMD reale e relativi benchmark restano aperti.
 
 ## M5 — Processi e interazione stile top/htop
 

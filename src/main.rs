@@ -1,6 +1,7 @@
 mod app;
 mod collectors;
 mod config;
+mod hardware;
 mod headless;
 mod history;
 mod model;
@@ -19,9 +20,23 @@ use std::{
 #[derive(Parser)]
 #[command(
     version,
-    about = "Linux monitor · live CPU/RAM/disks/network; GPU/thermals/processes are demo"
+    about = "Linux monitor · live CPU/RAM/disks/network; NVIDIA/AMD GPU and sensors; processes are demo"
 )]
 struct Cli {
+    #[command(subcommand)]
+    command: Option<Command>,
+    /// Report hardware capabilities without initializing a terminal.
+    #[arg(long)]
+    doctor: bool,
+    /// Diagnose a sysfs fixture or alternate mounted sysfs tree.
+    #[arg(long, global = true, default_value = "/sys")]
+    hardware_sysfs: std::path::PathBuf,
+    /// Disable NVIDIA runtime library loading.
+    #[arg(long, global = true)]
+    disable_nvml: bool,
+    #[arg(long, value_parser=clap::value_parser!(u64).range(1000..=60000))]
+    hardware_interval: Option<u64>,
+
     #[arg(long, value_parser = clap::value_parser!(u64).range(100..=60000))]
     interval: Option<u64>,
     #[arg(long)]
@@ -51,19 +66,26 @@ struct Cli {
     #[arg(long, requires = "preview")]
     svg: bool,
     /// Collect real Linux metrics as TSV without starting the TUI.
-    #[arg(long, conflicts_with_all = ["preview", "benchmark"], value_parser = clap::value_parser!(u32).range(1..=3600))]
+    #[arg(long, conflicts_with_all = ["preview", "benchmark", "benchmark_hardware"], value_parser = clap::value_parser!(u32).range(1..=3600))]
     collect: Option<u32>,
-    /// Benchmark the real collectors independently of the simulated TUI.
-    #[arg(long, conflicts_with = "preview")]
+    /// Benchmark the base collectors without rendering.
+    #[arg(long, group = "benchmark_mode", conflicts_with = "preview")]
     benchmark: bool,
-    #[arg(long, default_value_t = 3, requires = "benchmark", value_parser = clap::value_parser!(u32).range(1..=100))]
+    /// Measure hardware collectors separately, including unavailable backends.
+    #[arg(long, group = "benchmark_mode", conflicts_with = "preview")]
+    benchmark_hardware: bool,
+    #[arg(long, default_value_t = 3, requires = "benchmark_mode", value_parser = clap::value_parser!(u32).range(1..=100))]
     runs: u32,
-    #[arg(long, default_value_t = 30, requires = "benchmark", value_parser = clap::value_parser!(u64).range(0..=3600))]
+    #[arg(long, default_value_t = 30, requires = "benchmark_mode", value_parser = clap::value_parser!(u64).range(0..=3600))]
     warmup: u64,
-    #[arg(long, default_value_t = 300, requires = "benchmark", value_parser = clap::value_parser!(u64).range(1..=86400))]
+    #[arg(long, default_value_t = 300, requires = "benchmark_mode", value_parser = clap::value_parser!(u64).range(1..=86400))]
     duration: u64,
 }
 
+#[derive(clap::Subcommand)]
+enum Command {
+    Doctor,
+}
 fn main() -> io::Result<()> {
     let cli = Cli::parse();
     let mut config = config::Config::load(cli.config.as_deref())?;
@@ -88,7 +110,14 @@ fn main() -> io::Result<()> {
     if let Some(no_color) = cli.no_color {
         config.no_color = no_color;
     }
+    if let Some(interval) = cli.hardware_interval {
+        config.hardware_interval = interval;
+    }
     config.validate()?;
+    if cli.doctor || matches!(cli.command, Some(Command::Doctor)) {
+        hardware::doctor(&hardware::Collector::new(cli.hardware_sysfs, cli.disable_nvml).sample());
+        return Ok(());
+    }
     crossterm::style::force_color_output(!config.no_color);
     let interval = Duration::from_millis(config.interval);
     if let Some(count) = cli.collect {
@@ -96,6 +125,16 @@ fn main() -> io::Result<()> {
             count,
             interval,
             Duration::from_millis(config.filesystem_interval),
+        );
+    }
+    if cli.benchmark_hardware {
+        return headless::hardware_benchmark(
+            cli.hardware_sysfs,
+            cli.disable_nvml,
+            cli.runs,
+            Duration::from_secs(cli.warmup),
+            Duration::from_secs(cli.duration),
+            Duration::from_millis(config.hardware_interval),
         );
     }
     if cli.benchmark {
@@ -118,6 +157,9 @@ fn main() -> io::Result<()> {
         collector.sample();
         std::thread::sleep(interval);
         let snapshot = collector.sample();
+        app.apply_hardware(
+            hardware::Collector::new(cli.hardware_sysfs.clone(), cli.disable_nvml).sample(),
+        );
         app.apply(model::LiveFrame {
             snapshot,
             filesystems: collector.filesystems.as_ref().unwrap().clone(),
@@ -148,6 +190,16 @@ fn main() -> io::Result<()> {
     let _guard = Restore;
     let (tx, rx) = std::sync::mpsc::sync_channel(32);
     worker::input(tx.clone());
+    let hardware_worker = if demo {
+        None
+    } else {
+        Some(worker::HardwareWorker::spawn(
+            tx.clone(),
+            Duration::from_millis(config.hardware_interval),
+            cli.hardware_sysfs,
+            cli.disable_nvml,
+        ))
+    };
     let worker = if demo {
         None
     } else {
@@ -199,6 +251,8 @@ fn main() -> io::Result<()> {
                     app.interface.clone(),
                     app.disk.clone(),
                     app.mount.clone(),
+                    app.gpu_id.clone(),
+                    app.sensor_id.clone(),
                 );
                 let was_paused = app.paused;
                 if app.key(key) {
@@ -215,6 +269,8 @@ fn main() -> io::Result<()> {
                     app.interface.clone(),
                     app.disk.clone(),
                     app.mount.clone(),
+                    app.gpu_id.clone(),
+                    app.sensor_id.clone(),
                 );
                 dirty |= before != after;
                 if before.6 != app.no_color {
@@ -222,6 +278,9 @@ fn main() -> io::Result<()> {
                 }
                 if was_paused != app.paused {
                     if let Some(worker) = &worker {
+                        worker.pause(app.paused);
+                    }
+                    if let Some(worker) = &hardware_worker {
                         worker.pause(app.paused);
                     }
                     demo_next = Instant::now() + interval;
@@ -246,13 +305,33 @@ fn main() -> io::Result<()> {
         {
             let initial = app.live.is_none();
             let was_stale = app.stale();
+            let was_hardware_stale = app.hardware_stale();
             app.apply(frame);
             let size = terminal.size()?;
             dirty |= initial
                 || was_stale
+                || was_hardware_stale != app.hardware_stale()
                 || !app.help
                     && ((!app.focused && size.width >= 100 && size.height >= 32)
                         || matches!(app.selected, 0 | 2 | 3 | 4));
+        }
+        if let Some(worker) = &hardware_worker
+            && let Some(frame) = worker.take()
+            && !app.paused
+        {
+            let was_stale = app.stale();
+            app.apply_hardware(frame);
+            dirty |= was_stale != app.stale();
+            let size = terminal.size()?;
+            let dashboard = !app.focused && size.width >= 100 && size.height >= 32;
+            // Fold slower hardware updates into the next healthy base frame. Dedicated
+            // views and stalled/slower base collection draw directly.
+            let coalesce = dashboard
+                && config.interval <= config.hardware_interval
+                && app.live.is_some()
+                && !app.stale();
+            dirty |= !app.help
+                && ((!coalesce && dashboard) || (!dashboard && matches!(app.selected, 1 | 5)));
         }
     }
     Ok(())

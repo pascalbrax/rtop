@@ -1,0 +1,9 @@
+hardware run 1/3: warmup 30s
+hardware run 1/3: measuring 300s
+hardware run 1/3: CPU 0.0618% of one core; sensors 10; errors 0
+hardware run 2/3: warmup 30s
+hardware run 2/3: measuring 300s
+hardware run 2/3: CPU 0.0608% of one core; sensors 10; errors 0
+hardware run 3/3: warmup 30s
+hardware run 3/3: measuring 300s
+hardware run 3/3: CPU 0.0618% of one core; sensors 10; errors 0

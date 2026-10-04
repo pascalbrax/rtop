@@ -239,7 +239,11 @@ pub(super) fn panel(
 }
 fn chart(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, accent: Color) {
     let history = &app.histories[index];
-    let interval = Duration::from_millis(app.config.interval);
+    let interval = Duration::from_millis(if index >= 4 {
+        app.config.hardware_interval
+    } else {
+        app.config.interval
+    });
     let window = interval.mul_f64(app.config.history as f64);
     let peak = history
         .points
@@ -249,6 +253,8 @@ fn chart(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, ac
         .fold(0f64, f64::max);
     let (scale, unit, maximum) = match index {
         0 => (1., "CPU %", 100.),
+        4 => (1., "GPU %", 100.),
+        5 => (1., "C", (peak * 1.15).max(100.)),
         1 => {
             let total = app
                 .live
@@ -267,7 +273,7 @@ fn chart(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, ac
         }
     };
     let first = history.segments(app.now, window, interval, 0, scale);
-    let second = if index >= 2 {
+    let second = if matches!(index, 2 | 3) {
         history.segments(app.now, window, interval, 1, scale)
     } else {
         Vec::new()
@@ -369,4 +375,128 @@ fn chart(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, ac
             .style(Style::default().bg(p.surface)),
         area,
     );
+}
+
+pub(super) fn hardware_panel(
+    frame: &mut Frame,
+    area: Rect,
+    index: usize,
+    app: &App,
+    p: &Palette,
+    detail: bool,
+) {
+    let accent = p.sections[index];
+    let Some(h) = &app.hardware else {
+        frame.render_widget(
+            Paragraph::new("Collecting hardware... / rtop doctor")
+                .style(Style::default().fg(p.muted)),
+            area,
+        );
+        return;
+    };
+    let mut lines = Vec::new();
+    let mut summary = if index == 1 {
+        "N/D: no supported GPU".to_string()
+    } else {
+        "N/D: no sensors".to_string()
+    };
+    if index == 1 {
+        if let Some(g) = app.gpu() {
+            summary = g
+                .utilization
+                .as_ref()
+                .map(|v| format!("{v:.1}% GPU"))
+                .unwrap_or_else(|e| format!("N/D: {e}"));
+            lines.push(format!("{} / {}", g.name, g.backend));
+            lines.push(
+                g.memory
+                    .as_ref()
+                    .map(|(u, t)| format!("VRAM {} / {}", bytes(*u), bytes(*t)))
+                    .unwrap_or_else(|e| format!("VRAM N/D: {e}")),
+            );
+            lines.push(
+                g.power_watts
+                    .as_ref()
+                    .map(|v| format!("Power {v:.1} W"))
+                    .unwrap_or_else(|e| format!("Power N/D: {e}")),
+            );
+            lines.push(format!("ID {}", g.id));
+            for s in h.sensors.iter().filter(|s| s.device == g.id) {
+                lines.push(sensor_line(s));
+            }
+        }
+        lines.push(format!(
+            "{} GPU devices / [ ] select / rtop doctor",
+            h.gpus.len()
+        ));
+    } else {
+        if let Some(s) = app.sensor() {
+            summary = s
+                .celsius
+                .as_ref()
+                .map(|v| format!("{v:.1} C / {} {}", s.kind, s.label))
+                .unwrap_or_else(|e| format!("N/D: {e}"));
+            lines.push(format!("{} / {}", s.source, s.device));
+        }
+        for s in &h.sensors {
+            lines.push(sensor_line(s));
+        }
+        lines.push(format!(
+            "{} sensors / [ ] select / rtop doctor",
+            h.sensors.len()
+        ));
+    }
+    if h.gpus.is_empty() && index == 1 || h.sensors.is_empty() && index == 5 {
+        lines.extend(h.diagnostics.iter().cloned());
+    }
+    if app.hardware_stale() {
+        summary = format!("STALE {summary}");
+    }
+    let stats = if detail {
+        lines
+            .len()
+            .min(area.height.saturating_sub(5) as usize)
+            .max(1)
+    } else {
+        2
+    };
+    let areas = Layout::vertical([
+        Constraint::Length(1),
+        Constraint::Length(stats as u16),
+        Constraint::Min(2),
+    ])
+    .split(area);
+    frame.render_widget(
+        Paragraph::new(summary).style(Style::default().fg(accent).bold()),
+        areas[0],
+    );
+    frame.render_widget(
+        Paragraph::new(lines.into_iter().map(Line::from).collect::<Vec<_>>())
+            .style(Style::default().fg(p.fg)),
+        areas[1],
+    );
+    chart(
+        frame,
+        areas[2],
+        if index == 1 { 4 } else { 5 },
+        app,
+        p,
+        accent,
+    );
+}
+fn sensor_line(s: &crate::hardware::Sensor) -> String {
+    let value = s
+        .celsius
+        .as_ref()
+        .map(|v| format!("{v:.1} C"))
+        .unwrap_or_else(|e| format!("N/D: {e}"));
+    format!(
+        "{} {} / {}: {}{}",
+        s.kind,
+        s.label,
+        s.source,
+        value,
+        s.critical
+            .map_or(String::new(), |v| format!(" / crit {v:.1} C"))
+    )
 }

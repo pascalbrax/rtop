@@ -16,6 +16,7 @@ pub enum Theme {
 pub struct Config {
     pub interval: u64,
     pub filesystem_interval: u64,
+    pub hardware_interval: u64,
     pub history: usize,
     pub theme: Theme,
     pub ascii: bool,
@@ -29,6 +30,7 @@ impl Default for Config {
         Self {
             interval: 1000,
             filesystem_interval: 30000,
+            hardware_interval: 2000,
             history: 120,
             theme: Theme::Dark,
             ascii: false,
@@ -78,6 +80,12 @@ impl Config {
                 "filesystem_interval must be 1000..3600000 ms",
             ));
         }
+        if !(1000..=60000).contains(&self.hardware_interval) {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "hardware_interval must be 1000..60000 ms",
+            ));
+        }
         if !(10..=3600).contains(&self.history) {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
@@ -118,6 +126,9 @@ mod tests {
         };
         assert!(c.validate().is_err());
         c.interval = 1000;
+        c.hardware_interval = 0;
+        assert!(c.validate().is_err());
+        c.hardware_interval = 2000;
         c.history = usize::MAX;
         assert!(c.validate().is_err());
     }

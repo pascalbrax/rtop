@@ -128,6 +128,82 @@ fn publish(
         Err(TrySendError::Disconnected(_)) => false,
     }
 }
+pub struct HardwareWorker {
+    control: Arc<(Mutex<Control>, Condvar)>,
+    latest: Arc<Mutex<Option<crate::hardware::HardwareFrame>>>,
+}
+impl HardwareWorker {
+    pub fn spawn(
+        sender: SyncSender<Message>,
+        interval: Duration,
+        root: std::path::PathBuf,
+        disable_nvml: bool,
+    ) -> Self {
+        let control = Arc::new((
+            Mutex::new(Control {
+                paused: false,
+                stop: false,
+                epoch: 0,
+            }),
+            Condvar::new(),
+        ));
+        let latest = Arc::new(Mutex::new(None));
+        let worker_control = control.clone();
+        let slot = latest.clone();
+        thread::spawn(move || {
+            let mut collector = crate::hardware::Collector::new(root, disable_nvml);
+            let (lock, wake) = &*worker_control;
+            loop {
+                let mut state = lock.lock().unwrap();
+                while state.paused && !state.stop {
+                    state = wake.wait(state).unwrap();
+                }
+                if state.stop {
+                    break;
+                }
+                let epoch = state.epoch;
+                drop(state);
+                let frame = collector.sample();
+                let state = lock.lock().unwrap();
+                if state.stop {
+                    break;
+                }
+                if !state.paused && state.epoch == epoch {
+                    *slot.lock().unwrap() = Some(frame);
+                    if matches!(
+                        sender.try_send(Message::Sample),
+                        Err(TrySendError::Disconnected(_))
+                    ) {
+                        break;
+                    }
+                }
+                let _ = wake.wait_timeout(state, interval).unwrap();
+            }
+        });
+        Self { control, latest }
+    }
+    pub fn pause(&self, paused: bool) {
+        let (lock, wake) = &*self.control;
+        let mut state = lock.lock().unwrap();
+        if state.paused != paused {
+            state.paused = paused;
+            state.epoch = state.epoch.wrapping_add(1);
+        }
+        self.latest.lock().unwrap().take();
+        wake.notify_one();
+    }
+    pub fn take(&self) -> Option<crate::hardware::HardwareFrame> {
+        self.latest.lock().unwrap().take()
+    }
+}
+impl Drop for HardwareWorker {
+    fn drop(&mut self) {
+        let (lock, wake) = &*self.control;
+        lock.lock().unwrap().stop = true;
+        wake.notify_one();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

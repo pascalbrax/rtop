@@ -27,7 +27,10 @@ pub struct App {
     pub history: [u64; 60],
     pub demo: bool,
     pub live: Option<LiveFrame>,
-    pub histories: [History; 4],
+    pub histories: [History; 6],
+    pub hardware: Option<crate::hardware::HardwareFrame>,
+    pub gpu_id: Option<String>,
+    pub sensor_id: Option<String>,
     pub now: Instant,
     pub config: Config,
     pub hostname: String,
@@ -40,6 +43,9 @@ impl App {
         Self {
             demo: true,
             live: None,
+            hardware: None,
+            gpu_id: None,
+            sensor_id: None,
             histories: std::array::from_fn(|_| History::new(120)),
             now: Instant::now(),
             config: Config::default(),
@@ -225,6 +231,85 @@ impl App {
             self.histories[2].points.clear();
         }
     }
+    pub fn gpu(&self) -> Option<&crate::hardware::Gpu> {
+        let gpus = &self.hardware.as_ref()?.gpus;
+        if let Some(id) = &self.gpu_id {
+            gpus.iter().find(|g| &g.id == id)
+        } else {
+            gpus.iter()
+                .find(|g| g.backend != "unsupported DRM")
+                .or_else(|| gpus.first())
+        }
+    }
+    pub fn sensor(&self) -> Option<&crate::hardware::Sensor> {
+        let sensors = &self.hardware.as_ref()?.sensors;
+        if let Some(id) = &self.sensor_id {
+            sensors.iter().find(|s| &s.id == id)
+        } else {
+            sensors
+                .iter()
+                .find(|s| s.kind == "CPU")
+                .or_else(|| sensors.first())
+        }
+    }
+    pub fn hardware_stale(&self) -> bool {
+        !self.paused
+            && self.hardware.as_ref().is_some_and(|f| {
+                self.now.saturating_duration_since(f.at)
+                    > Duration::from_millis(self.config.hardware_interval) * 3
+            })
+    }
+    pub fn apply_hardware(&mut self, frame: crate::hardware::HardwareFrame) {
+        self.now = Instant::now();
+        self.hardware = Some(frame);
+        let gpu = self
+            .gpu()
+            .map(|g| (g.id.clone(), g.utilization.as_ref().ok().map(|v| [*v, 0.])));
+        let sensor = self
+            .sensor()
+            .map(|s| (s.id.clone(), s.celsius.as_ref().ok().map(|v| [*v, 0.])));
+        let at = self.hardware.as_ref().unwrap().at;
+        let (id, v) = gpu.unwrap_or_else(|| (self.histories[4].identity.clone(), None));
+        self.histories[4].push(&id, at, v);
+        let (id, v) = sensor.unwrap_or_else(|| (self.histories[5].identity.clone(), None));
+        self.histories[5].push(&id, at, v);
+    }
+    fn cycle_hardware(&mut self, forward: bool) {
+        let Some(f) = &self.hardware else {
+            return;
+        };
+        let (ids, current) = if self.selected == 1 {
+            (
+                f.gpus.iter().map(|g| g.id.clone()).collect::<Vec<_>>(),
+                self.gpu().map(|g| g.id.clone()),
+            )
+        } else if self.selected == 5 {
+            (
+                f.sensors.iter().map(|s| s.id.clone()).collect::<Vec<_>>(),
+                self.sensor().map(|s| s.id.clone()),
+            )
+        } else {
+            return;
+        };
+        if ids.is_empty() {
+            return;
+        }
+        let i = current
+            .and_then(|id| ids.iter().position(|v| *v == id))
+            .unwrap_or(0);
+        let next = if forward {
+            (i + 1) % ids.len()
+        } else {
+            (i + ids.len() - 1) % ids.len()
+        };
+        if self.selected == 1 {
+            self.gpu_id = Some(ids[next].clone());
+            self.histories[4].points.clear();
+        } else {
+            self.sensor_id = Some(ids[next].clone());
+            self.histories[5].points.clear();
+        }
+    }
     pub fn cpu(&self) -> u16 {
         (24 + self.sample.wrapping_mul(7) % 49) as u16
     }
@@ -256,8 +341,14 @@ impl App {
             KeyCode::Enter => self.focused = !self.focused,
             KeyCode::Esc => self.focused = false,
             KeyCode::Char(' ') => self.paused = !self.paused,
-            KeyCode::Char(']') => self.cycle(true, false),
-            KeyCode::Char('[') => self.cycle(false, false),
+            KeyCode::Char(']') => {
+                self.cycle(true, false);
+                self.cycle_hardware(true);
+            }
+            KeyCode::Char('[') => {
+                self.cycle(false, false);
+                self.cycle_hardware(false);
+            }
             KeyCode::Char('f') if self.selected == 3 => self.cycle(true, true),
             KeyCode::Char('t') => self.light = !self.light,
             KeyCode::Char('a') => self.ascii = !self.ascii,

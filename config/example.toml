@@ -1,6 +1,7 @@
 # ~/.config/rtop/config.toml (or --config PATH)
 interval = 1000                 # ms, 100..60000
 filesystem_interval = 30000     # ms, refreshed on the next collector sample
+hardware_interval = 2000       # ms, GPU/sensors, 1000..60000
 history = 120                   # samples per series, 10..3600
 theme = "dark"                  # dark | light
 ascii = false

@@ -265,3 +265,86 @@ pub fn benchmark(
     }
     Ok(())
 }
+
+/// Isolated hardware cost, including cached discovery refreshes and missing backends.
+pub fn hardware_benchmark(
+    root: std::path::PathBuf,
+    disable_nvml: bool,
+    runs: u32,
+    warmup: Duration,
+    duration: Duration,
+    interval: Duration,
+) -> io::Result<()> {
+    let mut collector = crate::hardware::Collector::new(root, disable_nvml);
+    println!(
+        "run,wall_s,cpu_percent_one_core,samples,rss_start_kib,rss_end_kib,collection_p95_us,gpu_discovery_mean_us,sensor_mean_us,gpu_devices,supported_gpus,sensors,sensor_errors"
+    );
+    for run in 1..=runs {
+        eprintln!("hardware run {run}/{runs}: warmup {}s", warmup.as_secs());
+        let until = Instant::now() + warmup;
+        let mut next = Instant::now();
+        while Instant::now() < until {
+            black_box(collector.sample());
+            next += interval;
+            sleep_until(next.min(until));
+        }
+        let rss_start = rss().unwrap_or(0);
+        let before = resources()?;
+        let start = Instant::now();
+        let end = start + duration;
+        let mut next = start;
+        let mut costs = Vec::new();
+        let mut sums = [0u128; 2];
+        let mut counts = [0usize; 3];
+        let mut errors = 0usize;
+        eprintln!(
+            "hardware run {run}/{runs}: measuring {}s",
+            duration.as_secs()
+        );
+        while Instant::now() < end {
+            let at = Instant::now();
+            let f = collector.sample();
+            costs.push(at.elapsed().as_micros());
+            sums[0] += f.gpu_cost.as_micros();
+            sums[1] += f.sensor_cost.as_micros();
+            counts = [
+                f.gpus.len(),
+                f.gpus
+                    .iter()
+                    .filter(|g| g.backend != "unsupported DRM")
+                    .count(),
+                f.sensors.len(),
+            ];
+            errors += f.sensors.iter().filter(|s| s.celsius.is_err()).count();
+            black_box(f);
+            next += interval;
+            if next < Instant::now() {
+                next = Instant::now() + interval;
+            }
+            sleep_until(next.min(end));
+        }
+        let wall = start.elapsed().as_secs_f64();
+        let after = resources()?;
+        let cpu = (cpu_seconds(&after) - cpu_seconds(&before)) / wall * 100.;
+        costs.sort_unstable();
+        let n = costs.len();
+        if n == 0 {
+            return Err(io::Error::other("no hardware benchmark samples"));
+        }
+        println!(
+            "{run},{wall:.6},{cpu:.6},{n},{rss_start},{},{},{},{},{},{},{},{errors}",
+            rss().unwrap_or(0),
+            costs[((n - 1) * 95) / 100],
+            sums[0] / n as u128,
+            sums[1] / n as u128,
+            counts[0],
+            counts[1],
+            counts[2]
+        );
+        eprintln!(
+            "hardware run {run}/{runs}: CPU {cpu:.4}% of one core; sensors {}; errors {errors}",
+            counts[2]
+        );
+    }
+    Ok(())
+}

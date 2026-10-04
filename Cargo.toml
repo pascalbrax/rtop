@@ -2,7 +2,7 @@
 name = "rtop"
 version = "0.1.0"
 edition = "2024"
-description = "A low-overhead Linux terminal monitor — visual prototype"
+description = "A low-overhead Linux terminal monitor with live metrics and hardware diagnostics"
 license = "MIT"
 
 [dependencies]

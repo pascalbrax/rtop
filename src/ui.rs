@@ -119,7 +119,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
                     if app.demo {
                         "     SIMULATED DATA"
                     } else {
-                        "     LIVE / CPU RAM DISK NET"
+                        "     LIVE / CPU RAM GPU DISK NET THERMALS"
                     },
                     Style::default().fg(p.muted),
                 ),
@@ -133,7 +133,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
                     )
                 } else {
                     format!(
-                        " {} | {} | GPU/thermals/processes: DEMO",
+                        " {} | {} | processes: DEMO",
                         app.hostname,
                         if app.paused {
                             "PAUSED"
@@ -237,7 +237,7 @@ fn panel(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, de
                 " {} {}{} ",
                 index + 1,
                 SECTIONS[index],
-                if !app.demo && matches!(index, 1 | 5 | 6) {
+                if !app.demo && index == 6 {
                     " / DEMO"
                 } else {
                     ""
@@ -254,6 +254,10 @@ fn panel(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, de
         )));
     let inner = block.inner(area);
     frame.render_widget(block, area);
+    if !app.demo && matches!(index, 1 | 5) {
+        live::hardware_panel(frame, inner, index, app, p, detail);
+        return;
+    }
     if !app.demo && matches!(index, 0 | 2 | 3 | 4) {
         live::panel(frame, inner, index, app, p, detail);
         return;
@@ -536,7 +540,7 @@ pub fn buffer_svg(buffer: &Buffer) -> String {
         buffer.area.width as u32 * 9,
         buffer.area.height as u32 * 18
     );
-    svg.push_str("<title>rtop M1 — simulated data terminal capture</title>\n");
+    svg.push_str("<title>rtop — terminal capture</title>\n");
     for y in 0..buffer.area.height {
         for x in 0..buffer.area.width {
             let cell = &buffer[(x, y)];
@@ -615,8 +619,8 @@ mod tests {
         terminal.draw(|f| draw(f, &app)).unwrap();
         let text = buffer_text(terminal.backend().buffer());
         for label in [
-            "LIVE / CPU RAM DISK NET",
-            "GPU / DEMO",
+            "LIVE / CPU RAM GPU DISK NET THERMALS",
+            "Processes / DEMO",
             "Processes / DEMO",
             "eth0",
             "sda",
@@ -645,6 +649,94 @@ mod tests {
         assert!(
             buffer_text(terminal.backend().buffer()).contains("Network N/D: interface unavailable")
         );
+    }
+    #[test]
+    fn hardware_absence_errors_selection_and_staleness() {
+        use crate::hardware::{Gpu, HardwareFrame, Sensor};
+        use std::time::{Duration, Instant};
+        for (w, h) in [(80, 24), (120, 40), (160, 50)] {
+            for (light, ascii, no_color) in [
+                (false, false, false),
+                (true, false, false),
+                (false, true, true),
+            ] {
+                let mut app = App::configured(crate::config::Config::default(), false);
+                app.light = light;
+                app.ascii = ascii;
+                app.no_color = no_color;
+                app.apply(crate::model::fixture(Instant::now()));
+                app.apply_hardware(HardwareFrame {
+                    at: Instant::now(),
+                    gpu_cost: Duration::ZERO,
+                    sensor_cost: Duration::ZERO,
+                    gpus: vec![],
+                    sensors: vec![],
+                    diagnostics: vec!["NVML library unavailable".into()],
+                });
+                for selected in [1, 5] {
+                    app.selected = selected;
+                    app.focused = true;
+                    let mut terminal = Terminal::new(TestBackend::new(w, h)).unwrap();
+                    terminal.draw(|f| draw(f, &app)).unwrap();
+                    let text = buffer_text(terminal.backend().buffer());
+                    assert!(text.contains("N/D:"));
+                    assert!(!text.contains("/ DEMO"));
+                    if ascii {
+                        assert!(text.is_ascii());
+                    }
+                }
+            }
+        }
+        let mut app = App::configured(crate::config::Config::default(), false);
+        app.selected = 1;
+        app.focused = true;
+        app.apply_hardware(HardwareFrame {
+            at: Instant::now(),
+            gpu_cost: Duration::ZERO,
+            sensor_cost: Duration::ZERO,
+            gpus: vec![Gpu {
+                id: "gpu0".into(),
+                name: "GPU test".into(),
+                backend: "NVML",
+                utilization: Err("GPU Lost".into()),
+                memory: Err("Not Supported".into()),
+                power_watts: Err("Not Supported".into()),
+            }],
+            sensors: vec![
+                Sensor {
+                    id: "s0".into(),
+                    device: "gpu0".into(),
+                    label: "GPU core".into(),
+                    kind: "GPU",
+                    source: "NVML".into(),
+                    celsius: Ok(61.),
+                    critical: None,
+                },
+                Sensor {
+                    id: "s1".into(),
+                    device: "cpu0".into(),
+                    label: "Package id 0".into(),
+                    kind: "CPU",
+                    source: "coretemp".into(),
+                    celsius: Err("permission denied".into()),
+                    critical: Some(100.),
+                },
+            ],
+            diagnostics: vec![],
+        });
+        let mut terminal = Terminal::new(TestBackend::new(120, 40)).unwrap();
+        terminal.draw(|f| draw(f, &app)).unwrap();
+        assert!(buffer_text(terminal.backend().buffer()).contains("N/D: GPU Lost"));
+        app.selected = 5;
+        assert_eq!(app.sensor().unwrap().id, "s1");
+        app.key(crossterm::event::KeyEvent::new(
+            crossterm::event::KeyCode::Char(']'),
+            crossterm::event::KeyModifiers::NONE,
+        ));
+        assert_eq!(app.sensor().unwrap().id, "s0");
+        app.now = app.hardware.as_ref().unwrap().at + Duration::from_secs(7);
+        terminal.draw(|f| draw(f, &app)).unwrap();
+        assert!(buffer_text(terminal.backend().buffer()).contains("STALE"));
     }
     #[test]
     fn small_terminal_and_help() {

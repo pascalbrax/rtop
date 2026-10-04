@@ -31,7 +31,7 @@ for demo, exit_key in ((False,b"q"),(False,b"\x03"),(True,b"q")):
     try:
         data = drain(master, 0.4)
         normalized=b" ".join(re.sub(rb"\x1b\[[0-?]*[ -/]*[@-~]",b" ",data).split())
-        assert (b"SIMULATED DATA" if demo else b"LIVE / CPU RAM DISK NET") in normalized
+        assert (b"SIMULATED DATA" if demo else b"LIVE / CPU RAM GPU DISK NET THERMALS") in normalized
         os.write(master, b" ")
         data = drain(master, 0.2)
         assert b"PAUSED" in data

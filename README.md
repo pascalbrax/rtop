@@ -2,22 +2,22 @@
 
 Monitor Linux da terminale scritto in Rust e Ratatui. Una dashboard ispirata a top/htop, con tema antracite, grafici colorati e raccolta progettata per consumare poca CPU.
 
-La dashboard mostra **CPU, RAM, rete e dischi reali**. GPU, temperature e processi sono ancora simulati e indicati come `DEMO`; i relativi collector sono previsti in M4/M5. M3 integra worker, storico con timestamp e configurazione TOML.
+La dashboard mostra **CPU, RAM, rete e dischi reali**. GPU NVIDIA/AMD e temperature usano ora backend reali, con `N/D` per hardware assente o non supportato. Solo i processi restano simulati e indicati come `DEMO`, in attesa di M5. M3 integra worker, storico con timestamp e configurazione TOML.
 
-![Dashboard live di rtop](docs/previews/live-dark-120x40.svg)
+![Dashboard live di rtop](docs/previews/m4-live-dark-120x40.svg)
 
 ## Stato e prestazioni
 
-M1, M2 e M3 completate. Il progetto è in sviluppo: GPU e temperature reali sono previste in M4, la raccolta dei processi in M5. Il pannello processi occupa metà della fascia centrale, accanto alla memoria.
+M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le fixture NVIDIA/AMD passano, mentre serve ancora la verifica su GPU NVIDIA e AMD reali. La raccolta dei processi è prevista in M5. Il pannello processi occupa metà della fascia centrale, accanto alla memoria.
 
-| Misura della dashboard a 1 Hz | Risultato |
-| --- | --- |
-| Durata misurata | 1 ora |
-| CPU media | 0,33% di un core |
-| Memoria residente | 3,75 MiB, stabile |
-| Latenza input-render p95 | 5,57 ms |
+| Misura su PTY, collector base a 1 Hz | M3: base | M4: base + sensori CPU |
+| --- | --- | --- |
+| Durata misurata | 1 ora | 1000 s |
+| CPU media di un core | 0,33% | 0,408% |
+| Memoria residente finale | 3,75 MiB | 4,25 MiB |
+| Latenza input-render p95 | 5,57 ms | 4,97 ms |
 
-Misure della build release su pseudo-terminale 120×40 drenato, truecolor, nel sandbox Linux di riferimento. Il rendering dell'emulatore grafico e i futuri collector GPU/processi sono esclusi. Metodo, hardware e dati grezzi: [verifica M3](docs/M3-VERIFICATION.md).
+Build release su pseudo-terminale 120×40 drenato, truecolor, nel sandbox Linux di riferimento. M4 include dieci sensori CPU a intervalli di 2 secondi e una GPU Matrox non supportata. Il costo dell'emulatore grafico, di GPU supportate reali e dei futuri collector processi è escluso. Metodo, hardware e dati grezzi: [verifica M3](docs/M3-VERIFICATION.md) e [verifica M4](docs/M4-VERIFICATION.md).
 
 ## Installazione
 
@@ -74,7 +74,7 @@ cargo build --release
 | t | Tema chiaro/scuro |
 | a | ASCII/Unicode |
 | c | Attiva/disattiva colori |
-| [ / ] | Cambia disco/interfaccia nel rispettivo pannello |
+| [ / ] | Cambia GPU, sensore, disco o interfaccia nel rispettivo pannello |
 | f | Cambia filesystem nel pannello dischi |
 | ? | Aiuto |
 | q / Ctrl-C | Esce e ripristina il terminale |
@@ -98,6 +98,19 @@ cargo run --release -- --config config/example.toml
 cargo run --release -- --theme light --history 120
 ```
 
+## GPU e temperature
+
+NVIDIA richiede la libreria runtime `libnvidia-ml.so.1` fornita dal driver. AMD usa le interfacce sysfs di `amdgpu`. I sensori CPU/GPU vengono letti da hwmon; le thermal zone sono un fallback identificato esplicitamente. L'assenza di una GPU supportata non impedisce l'avvio.
+
+```bash
+rtop doctor
+rtop doctor --disable-nvml
+rtop --hardware-interval 2000
+rtop --benchmark-hardware --runs 3 --warmup 30 --duration 300
+```
+
+`doctor` spiega backend disponibili e metriche mancanti senza aprire la TUI. `hardware_interval` è configurabile anche nel TOML: default 2000 ms, limiti 1000–60000. Discovery ogni 30 secondi; nessun subprocess periodico. La raccolta hardware ha un worker separato, così una lettura driver lenta non blocca input o metriche di base. Dettagli e limiti: [M4-VERIFICATION.md](docs/M4-VERIFICATION.md).
+
 ## Anteprime riproducibili
 
 ```bash
@@ -119,7 +132,7 @@ cargo run -- --preview 120x40 --live-preview --svg --no-color=false > live.svg
 - [Dashboard 160×50](docs/previews/160x50.txt)
 - [ASCII senza colore](docs/previews/ascii-80x24.txt)
 
-Le anteprime standard restano fixture deterministiche; `--live-preview` raccoglie due campioni reali prima della cattura. Solo GPU, temperature e processi conservano fixture nella dashboard live.
+Le anteprime standard restano fixture deterministiche; `--live-preview` raccoglie due campioni reali prima della cattura. Solo i processi conservano fixture nella dashboard live; GPU e temperature mancanti mostrano `N/D`.
 
 ## Verifica
 
@@ -131,7 +144,8 @@ cargo build
 python3 tests/terminal_smoke.py
 python3 tests/verify_collectors.py
 python3 tests/config_cli.py
-python3 tests/tui_latency.py
+python3 tests/hardware_safety.py # richiede anche un compilatore C per la fixture NVML
+python3 tests/tui_latency.py --output docs/benchmarks/m4-input-latency.json
 python3 tests/tui_soak.py  # 1 ora misurata + 30 secondi iniziali
 ```
 
@@ -143,4 +157,4 @@ Il ciclo applicativo attende input o notifiche del worker, senza polling periodi
 
 ## Piano
 
-[Roadmap](ROADMAP.md) · [Milestone](MILESTONES.md) · [Evidenze M1](docs/M1-VERIFICATION.md) · [Evidenze M2](docs/M2-VERIFICATION.md) · [Evidenze M3](docs/M3-VERIFICATION.md)
+[Roadmap](ROADMAP.md) · [Milestone](MILESTONES.md) · [Evidenze M1](docs/M1-VERIFICATION.md) · [Evidenze M2](docs/M2-VERIFICATION.md) · [Evidenze M3](docs/M3-VERIFICATION.md) · [Evidenze M4](docs/M4-VERIFICATION.md)
