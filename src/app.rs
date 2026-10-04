@@ -237,7 +237,12 @@ impl App {
             gpus.iter().find(|g| &g.id == id)
         } else {
             gpus.iter()
-                .find(|g| g.backend != "unsupported DRM")
+                .find(|g| {
+                    matches!(
+                        g.backend,
+                        "NVML" | "AMDGPU sysfs" | "Intel Level Zero Sysman"
+                    )
+                })
                 .or_else(|| gpus.first())
         }
     }

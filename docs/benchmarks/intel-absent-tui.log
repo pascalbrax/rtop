@@ -1,0 +1,29 @@
+elapsed=30s CPU=0.11s RSS=4096KiB threads=4
+elapsed=90s CPU=0.35s RSS=4224KiB threads=4
+elapsed=150s CPU=0.62s RSS=4224KiB threads=4
+elapsed=210s CPU=0.88s RSS=4224KiB threads=4
+elapsed=270s CPU=1.12s RSS=4224KiB threads=4
+elapsed=330s CPU=1.38s RSS=4224KiB threads=4
+{
+  "binary_sha256": "291c9660512ade43e7e29f1395492234c62230d607be87281f42cea71817caf9",
+  "measured_wall_s": 300.0003883317113,
+  "cpu_percent_one_core": 0.42333278535484997,
+  "rss_start_kib": 4096,
+  "rss_end_kib": 4224,
+  "rss_tail_range_kib": 128,
+  "threads_max": 4,
+  "output_bytes": 365832,
+  "benchmark_windows": [
+    {
+      "run": 1,
+      "wall_s": 300.0003883317113,
+      "cpu_percent_one_core": 0.42333278535484997,
+      "rss_start_kib": 4096,
+      "rss_end_kib": 4224
+    }
+  ],
+  "restored_terminal": true,
+  "clock_ticks_per_second": 100,
+  "net_namespace": "net:[4026533481]",
+  "terminal": "drained PTY, 120x40, truecolor, 1 Hz; no graphical terminal emulator"
+}

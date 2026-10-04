@@ -60,12 +60,15 @@
 - [x] Integrare thermal zones come fallback senza attribuzioni arbitrarie alla CPU.
 - [x] Gestire librerie assenti, GPU non supportate, permessi mancanti e dispositivi rimossi.
 - [x] Implementare `doctor` con backend, dispositivi e ragioni delle metriche mancanti.
-- [ ] Validare su almeno una GPU NVIDIA e una AMD; registrare i modelli e le versioni driver.
+- [x] Aggiungere discovery Intel `i915`/`xe` e backend opzionale Level Zero Sysman.
+- [ ] Completare confronto delle metriche e benchmark NVIDIA T1000 su Debian; registrare versioni driver.
+- [ ] Validare Intel Arc su Fedora; identificare modello, driver e runtime.
+- [ ] Validare AMD reale e registrarne driver/modello — **in sospeso su richiesta dell'utente**.
 - [ ] Misurare il costo aggiuntivo di ogni backend GPU e dei sensori.
 
 **Completamento:** validazione hardware documentata, nessun subprocess periodico e nessun blocco della UI durante errori del backend. Se l'hardware non è disponibile, lasciare la relativa validazione aperta: i test simulati non la sostituiscono. Pubblicare consumo e limiti della dashboard completa.
 
-**Verifica locale M4:** implementazione e test senza GPU disponibili in [M4-VERIFICATION.md](docs/M4-VERIFICATION.md). 15 test Rust e regressioni hardware passano; sessione integrata da 1000 s: CPU 0,408% di un core, RSS finale 4352 KiB, p95 input-render 4,97 ms. Sensori e percorso senza backend misurati in tre run da 300 s. Riconoscimento NVIDIA T1000 su Debian confermato dall'utente il 4 ottobre 2026. Confronto delle metriche, versioni driver, benchmark GPU e validazione AMD reale restano aperti.
+**Verifica locale M4:** implementazione e test senza GPU disponibili in [M4-VERIFICATION.md](docs/M4-VERIFICATION.md). 15 test Rust e regressioni hardware passano; sessione integrata da 1000 s: CPU 0,408% di un core, RSS finale 4352 KiB, p95 input-render 4,97 ms. Sensori e percorso senza backend misurati in tre run da 300 s. Riconoscimento NVIDIA T1000 su Debian confermato dall'utente il 4 ottobre 2026. Backend Intel implementato e verificato con fixture `i915`/`xe`: [verifica Intel](docs/INTEL-VERIFICATION.md). Test Intel reale previsto su Fedora, modello da identificare e driver probabilmente `xe`. Confronto delle metriche, versioni e benchmark GPU restano aperti; la validazione AMD reale è in sospeso su richiesta dell'utente.
 
 ## M5 — Processi e interazione stile top/htop
 
@@ -103,7 +106,7 @@
 
 ## Dopo la prima release
 
-- [ ] Studiare supporto Intel GPU e costruire una matrice hardware più ampia.
+- [ ] Ampliare la matrice hardware NVIDIA/AMD/Intel e le capacità dei relativi backend.
 - [ ] Valutare ulteriori ottimizzazioni in base ai profili reali.
 - [ ] Valutare esportazione dei campioni e modalità headless.
 - [ ] Valutare altri sistemi operativi mantenendo separati i backend.

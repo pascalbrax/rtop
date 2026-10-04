@@ -20,7 +20,7 @@ use std::{
 #[derive(Parser)]
 #[command(
     version,
-    about = "Linux monitor · live CPU/RAM/disks/network; NVIDIA/AMD GPU and sensors; processes are demo"
+    about = "Linux monitor · live CPU/RAM/disks/network; NVIDIA/AMD/Intel GPU and sensors; processes are demo"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -34,6 +34,9 @@ struct Cli {
     /// Disable NVIDIA runtime library loading.
     #[arg(long, global = true)]
     disable_nvml: bool,
+    /// Disable Intel Level Zero loading; keep DRM discovery and hwmon sensors.
+    #[arg(long, global = true)]
+    disable_intel: bool,
     #[arg(long, value_parser=clap::value_parser!(u64).range(1000..=60000))]
     hardware_interval: Option<u64>,
 
@@ -115,8 +118,12 @@ fn main() -> io::Result<()> {
     }
     config.validate()?;
     if cli.doctor || matches!(cli.command, Some(Command::Doctor)) {
-        hardware::doctor(&hardware::Collector::new(cli.hardware_sysfs, cli.disable_nvml).sample());
-        return Ok(());
+        let mut collector = hardware::Collector::new(cli.hardware_sysfs, cli.disable_nvml);
+        collector.disable_intel(cli.disable_intel);
+        return match hardware::doctor(&collector.sample()) {
+            Err(e) if e.kind() == io::ErrorKind::BrokenPipe => Ok(()),
+            result => result,
+        };
     }
     crossterm::style::force_color_output(!config.no_color);
     let interval = Duration::from_millis(config.interval);
@@ -131,6 +138,7 @@ fn main() -> io::Result<()> {
         return headless::hardware_benchmark(
             cli.hardware_sysfs,
             cli.disable_nvml,
+            cli.disable_intel,
             cli.runs,
             Duration::from_secs(cli.warmup),
             Duration::from_secs(cli.duration),
@@ -154,12 +162,13 @@ fn main() -> io::Result<()> {
     }
     if cli.live_preview {
         let mut collector = collectors::LinuxCollector::new();
+        let mut hardware = hardware::Collector::new(cli.hardware_sysfs.clone(), cli.disable_nvml);
+        hardware.disable_intel(cli.disable_intel);
         collector.sample();
+        hardware.sample();
         std::thread::sleep(interval);
         let snapshot = collector.sample();
-        app.apply_hardware(
-            hardware::Collector::new(cli.hardware_sysfs.clone(), cli.disable_nvml).sample(),
-        );
+        app.apply_hardware(hardware.sample());
         app.apply(model::LiveFrame {
             snapshot,
             filesystems: collector.filesystems.as_ref().unwrap().clone(),
@@ -198,6 +207,7 @@ fn main() -> io::Result<()> {
             Duration::from_millis(config.hardware_interval),
             cli.hardware_sysfs,
             cli.disable_nvml,
+            cli.disable_intel,
         ))
     };
     let worker = if demo {

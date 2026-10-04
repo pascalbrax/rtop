@@ -17,7 +17,7 @@ La qualità visiva si misura attraverso leggibilità, coerenza, navigazione e ad
 - Processi: PID, nome, CPU e RAM, filtro e ordinamento.
 - Configurazione TOML, argomenti CLI, aiuto e comando diagnostico `doctor`.
 
-Intel GPU, altri sistemi operativi, controllo dei processi e notifiche sono sviluppi successivi. La disponibilità di ogni metrica dipende da hardware, driver e permessi.
+Il backend Intel GPU opzionale è incluso in M4 insieme a NVIDIA/AMD. Altri sistemi operativi, controllo dei processi e notifiche sono sviluppi successivi. La disponibilità di ogni metrica dipende da hardware, driver e permessi.
 
 ## Direzione visiva
 

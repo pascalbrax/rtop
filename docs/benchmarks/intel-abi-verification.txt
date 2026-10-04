@@ -1,0 +1,1 @@
+PASS: official Sysman C ABI sizes, offsets and enum values (64-bit Linux)

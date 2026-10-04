@@ -138,6 +138,7 @@ impl HardwareWorker {
         interval: Duration,
         root: std::path::PathBuf,
         disable_nvml: bool,
+        disable_intel: bool,
     ) -> Self {
         let control = Arc::new((
             Mutex::new(Control {
@@ -152,6 +153,8 @@ impl HardwareWorker {
         let slot = latest.clone();
         thread::spawn(move || {
             let mut collector = crate::hardware::Collector::new(root, disable_nvml);
+            collector.disable_intel(disable_intel);
+            let mut previous_epoch = 0;
             let (lock, wake) = &*worker_control;
             loop {
                 let mut state = lock.lock().unwrap();
@@ -162,6 +165,10 @@ impl HardwareWorker {
                     break;
                 }
                 let epoch = state.epoch;
+                if epoch != previous_epoch {
+                    collector.reset_rates();
+                    previous_epoch = epoch;
+                }
                 drop(state);
                 let frame = collector.sample();
                 let state = lock.lock().unwrap();

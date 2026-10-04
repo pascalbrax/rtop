@@ -1,0 +1,17 @@
+rtop hardware diagnostics (read-only)
+INFO NVML library unavailable
+GPU /sys/devices/pci0000:00/0000:00:1c.7/0000:08:00.0/0000:09:00.0/0000:0a:00.0/0000:0b:00.0 | card0 0x102b 0x0534 | unsupported DRM
+  utilization: Err("driver/backend unsupported or NVML unavailable")
+  VRAM used/total bytes: Err("driver/backend unsupported or NVML unavailable")
+  power W: Err("driver/backend unsupported or NVML unavailable")
+SENSOR /sys/devices/platform/coretemp.0:coretemp:temp1 | /sys/devices/platform/coretemp.0 | CPU | coretemp | Package id 0 | Ok(45.0) C | critical Some(102.0)
+SENSOR /sys/devices/platform/coretemp.0:coretemp:temp2 | /sys/devices/platform/coretemp.0 | CPU | coretemp | Core 0 | Ok(39.0) C | critical Some(102.0)
+SENSOR /sys/devices/platform/coretemp.0:coretemp:temp3 | /sys/devices/platform/coretemp.0 | CPU | coretemp | Core 1 | Ok(44.0) C | critical Some(102.0)
+SENSOR /sys/devices/platform/coretemp.0:coretemp:temp4 | /sys/devices/platform/coretemp.0 | CPU | coretemp | Core 2 | Ok(44.0) C | critical Some(102.0)
+SENSOR /sys/devices/platform/coretemp.0:coretemp:temp5 | /sys/devices/platform/coretemp.0 | CPU | coretemp | Core 3 | Ok(44.0) C | critical Some(102.0)
+SENSOR /sys/devices/platform/coretemp.1:coretemp:temp1 | /sys/devices/platform/coretemp.1 | CPU | coretemp | Package id 1 | Ok(48.0) C | critical Some(102.0)
+SENSOR /sys/devices/platform/coretemp.1:coretemp:temp2 | /sys/devices/platform/coretemp.1 | CPU | coretemp | Core 0 | Ok(46.0) C | critical Some(102.0)
+SENSOR /sys/devices/platform/coretemp.1:coretemp:temp3 | /sys/devices/platform/coretemp.1 | CPU | coretemp | Core 1 | Ok(42.0) C | critical Some(102.0)
+SENSOR /sys/devices/platform/coretemp.1:coretemp:temp4 | /sys/devices/platform/coretemp.1 | CPU | coretemp | Core 2 | Ok(48.0) C | critical Some(102.0)
+SENSOR /sys/devices/platform/coretemp.1:coretemp:temp5 | /sys/devices/platform/coretemp.1 | CPU | coretemp | Core 3 | Ok(42.0) C | critical Some(102.0)
+COST GPU/discovery 0.665 ms; sensors 1.055 ms

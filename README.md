@@ -2,13 +2,13 @@
 
 Monitor Linux da terminale scritto in Rust e Ratatui. Una dashboard ispirata a top/htop, con tema antracite, grafici colorati e raccolta progettata per consumare poca CPU.
 
-La dashboard mostra **CPU, RAM, rete e dischi reali**. GPU NVIDIA/AMD e temperature usano ora backend reali, con `N/D` per hardware assente o non supportato. Solo i processi restano simulati e indicati come `DEMO`, in attesa di M5. M3 integra worker, storico con timestamp e configurazione TOML.
+La dashboard mostra **CPU, RAM, rete e dischi reali**. GPU NVIDIA/AMD/Intel e temperature usano ora backend reali, con `N/D` per hardware assente o non supportato. Solo i processi restano simulati e indicati come `DEMO`, in attesa di M5. M3 integra worker, storico con timestamp e configurazione TOML.
 
 ![Dashboard live di rtop](docs/previews/m4-live-dark-120x40.svg)
 
 ## Stato e prestazioni
 
-M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le fixture NVIDIA/AMD passano, un utente ha confermato il riconoscimento di una NVIDIA T1000 su Debian. Restano il confronto delle metriche, i benchmark GPU e la verifica AMD reale. La raccolta dei processi è prevista in M5. Il pannello processi occupa metà della fascia centrale, accanto alla memoria.
+M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le fixture NVIDIA/AMD passano, un utente ha confermato il riconoscimento di una NVIDIA T1000 su Debian. Intel `i915`/`xe` è supportato tramite Level Zero Sysman, in attesa del test su Fedora. Restano confronto delle metriche e benchmark GPU; il test AMD reale è in sospeso su richiesta dell'utente. La raccolta dei processi è prevista in M5. Il pannello processi occupa metà della fascia centrale, accanto alla memoria.
 
 | Misura su PTY, collector base a 1 Hz | M3: base | M4: base + sensori CPU |
 | --- | --- | --- |
@@ -100,16 +100,17 @@ cargo run --release -- --theme light --history 120
 
 ## GPU e temperature
 
-NVIDIA richiede la libreria runtime `libnvidia-ml.so.1` fornita dal driver. AMD usa le interfacce sysfs di `amdgpu`. I sensori CPU/GPU vengono letti da hwmon; le thermal zone sono un fallback identificato esplicitamente. L'assenza di una GPU supportata non impedisce l'avvio.
+NVIDIA richiede la libreria runtime `libnvidia-ml.so.1` fornita dal driver. AMD usa le interfacce sysfs di `amdgpu`. Intel usa DRM `i915`/`xe`, sensori hwmon e la libreria opzionale `libze_loader.so.1` per Level Zero Sysman (utilizzo, VRAM locale e temperature). I sensori CPU/GPU vengono letti da hwmon; le thermal zone sono un fallback identificato esplicitamente. L'assenza di una GPU supportata non impedisce l'avvio.
 
 ```bash
 rtop doctor
 rtop doctor --disable-nvml
+rtop doctor --disable-intel
 rtop --hardware-interval 2000
 rtop --benchmark-hardware --runs 3 --warmup 30 --duration 300
 ```
 
-`doctor` spiega backend disponibili e metriche mancanti senza aprire la TUI. `hardware_interval` è configurabile anche nel TOML: default 2000 ms, limiti 1000–60000. Discovery ogni 30 secondi; nessun subprocess periodico. La raccolta hardware ha un worker separato, così una lettura driver lenta non blocca input o metriche di base. Dettagli e limiti: [M4-VERIFICATION.md](docs/M4-VERIFICATION.md).
+`doctor` spiega backend disponibili e metriche mancanti senza aprire la TUI. `hardware_interval` è configurabile anche nel TOML: default 2000 ms, limiti 1000–60000. Discovery ogni 30 secondi; nessun subprocess periodico. La raccolta hardware ha un worker separato, così una lettura driver lenta non blocca input o metriche di base. Dettagli e limiti: [M4-VERIFICATION.md](docs/M4-VERIFICATION.md). Per Intel, incluse istruzioni Fedora: [INTEL-VERIFICATION.md](docs/INTEL-VERIFICATION.md).
 
 ## Anteprime riproducibili
 
@@ -144,6 +145,7 @@ cargo build
 python3 tests/terminal_smoke.py
 python3 tests/verify_collectors.py
 python3 tests/config_cli.py
+python3 tests/intel_safety.py
 python3 tests/hardware_safety.py # richiede anche un compilatore C per la fixture NVML
 python3 tests/tui_latency.py --output docs/benchmarks/m4-input-latency.json
 python3 tests/tui_soak.py  # 1 ora misurata + 30 secondi iniziali
@@ -157,4 +159,4 @@ Il ciclo applicativo attende input o notifiche del worker, senza polling periodi
 
 ## Piano
 
-[Roadmap](ROADMAP.md) · [Milestone](MILESTONES.md) · [Evidenze M1](docs/M1-VERIFICATION.md) · [Evidenze M2](docs/M2-VERIFICATION.md) · [Evidenze M3](docs/M3-VERIFICATION.md) · [Evidenze M4](docs/M4-VERIFICATION.md)
+[Roadmap](ROADMAP.md) · [Milestone](MILESTONES.md) · [Evidenze M1](docs/M1-VERIFICATION.md) · [Evidenze M2](docs/M2-VERIFICATION.md) · [Evidenze M3](docs/M3-VERIFICATION.md) · [Evidenze M4](docs/M4-VERIFICATION.md) · [Intel/Fedora](docs/INTEL-VERIFICATION.md)

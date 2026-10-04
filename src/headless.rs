@@ -270,12 +270,14 @@ pub fn benchmark(
 pub fn hardware_benchmark(
     root: std::path::PathBuf,
     disable_nvml: bool,
+    disable_intel: bool,
     runs: u32,
     warmup: Duration,
     duration: Duration,
     interval: Duration,
 ) -> io::Result<()> {
     let mut collector = crate::hardware::Collector::new(root, disable_nvml);
+    collector.disable_intel(disable_intel);
     println!(
         "run,wall_s,cpu_percent_one_core,samples,rss_start_kib,rss_end_kib,collection_p95_us,gpu_discovery_mean_us,sensor_mean_us,gpu_devices,supported_gpus,sensors,sensor_errors"
     );
@@ -311,7 +313,12 @@ pub fn hardware_benchmark(
                 f.gpus.len(),
                 f.gpus
                     .iter()
-                    .filter(|g| g.backend != "unsupported DRM")
+                    .filter(|g| {
+                        matches!(
+                            g.backend,
+                            "NVML" | "AMDGPU sysfs" | "Intel Level Zero Sysman"
+                        )
+                    })
                     .count(),
                 f.sensors.len(),
             ];

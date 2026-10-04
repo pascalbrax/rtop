@@ -406,7 +406,13 @@ pub(super) fn hardware_panel(
                 .utilization
                 .as_ref()
                 .map(|v| format!("{v:.1}% GPU"))
-                .unwrap_or_else(|e| format!("N/D: {e}"));
+                .unwrap_or_else(|e| {
+                    if matches!(e.as_str(), "collecting" | "reset" | "no progress") {
+                        e.clone()
+                    } else {
+                        format!("N/D: {e}")
+                    }
+                });
             lines.push(format!("{} / {}", g.name, g.backend));
             lines.push(
                 g.memory

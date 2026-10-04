@@ -103,7 +103,7 @@ Segnalazione ricevuta il 4 ottobre 2026: su un PC Debian, una **NVIDIA T1000 è 
 
 Versione Debian, versione driver NVIDIA e versione/commit del binario non sono stati comunicati. Non sono ancora documentati disponibilità e confronto di utilizzo, VRAM, temperatura e potenza, né durata del test e consumo CPU/RAM su questo PC. Il riconoscimento non chiude questi controlli.
 
-M4 non è segnata come completata: restano la validazione delle metriche e il benchmark NVIDIA, la verifica su AMD reale e le relative versioni dei driver. Le fixture ABI/sysfs verificano la logica e gli errori, ma non sostituiscono questa validazione hardware. Nessun risultato di consumo viene esteso ai futuri collector processi di M5.
+M4 non è segnata come completata: restano la validazione delle metriche e il benchmark NVIDIA e il test Intel reale su Fedora. Il test AMD reale è in sospeso su richiesta dell'utente. Il backend Intel e le sue verifiche sono documentati in [INTEL-VERIFICATION.md](INTEL-VERIFICATION.md). Le fixture ABI/sysfs verificano la logica e gli errori, ma non sostituiscono questa validazione hardware. Nessun risultato di consumo viene esteso ai futuri collector processi di M5.
 
 ## Riferimenti delle interfacce
 

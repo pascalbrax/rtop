@@ -1,7 +1,8 @@
+mod intel;
 mod nvml;
 use std::{
     fs,
-    io::Read,
+    io::{Read, Write},
     path::{Path, PathBuf},
     time::{Duration, Instant},
 };
@@ -51,6 +52,8 @@ struct Drm {
     name: String,
     path: PathBuf,
     amd: bool,
+    intel: bool,
+    pci: Option<String>,
 }
 struct Hwmon {
     id: String,
@@ -65,6 +68,8 @@ pub struct Collector {
     root: PathBuf,
     disable_nvml: bool,
     nvml: Option<nvml::Nvml>,
+    intel: Option<intel::Intel>,
+    disable_intel: bool,
     discovered: Option<Instant>,
     drm: Vec<Drm>,
     sensors: Vec<Hwmon>,
@@ -76,10 +81,20 @@ impl Collector {
             root,
             disable_nvml,
             nvml: None,
+            intel: None,
+            disable_intel: false,
             discovered: None,
             drm: Vec::new(),
             sensors: Vec::new(),
             diagnostics: Vec::new(),
+        }
+    }
+    pub fn disable_intel(&mut self, disabled: bool) {
+        self.disable_intel = disabled;
+    }
+    pub fn reset_rates(&mut self) {
+        if let Some(i) = &mut self.intel {
+            i.reset_rates();
         }
     }
     fn discover(&mut self) {
@@ -113,6 +128,17 @@ impl Collector {
             let amd = vendor == "0x1002" && driver == "amdgpu";
             let identity = fs::canonicalize(&path).unwrap_or_else(|_| path.clone());
             let id = clean(&identity.to_string_lossy());
+            let intel = vendor == "0x8086" && matches!(driver.as_str(), "i915" | "xe");
+            let pci = {
+                let name = file_name(&identity);
+                pci_name(&name).then_some(name)
+            };
+            if intel {
+                self.diagnostics.push(format!(
+                    "DRM Intel: {name} / driver {driver} / PCI {}",
+                    pci.as_deref().unwrap_or("unavailable")
+                ));
+            }
             if self.drm.iter().any(|d| d.id == id) {
                 continue;
             }
@@ -128,7 +154,21 @@ impl Collector {
                 name: format!("{name} {model}"),
                 path,
                 amd,
+                intel,
+                pci,
             });
+        }
+        if self.drm.iter().any(|d| d.intel) {
+            if self.disable_intel {
+                self.diagnostics.push("Intel Sysman disabled".into());
+            } else if self.intel.is_none() {
+                match intel::Intel::load() {
+                    Ok(i) => self.intel = Some(i),
+                    Err(e) => self.diagnostics.push(e),
+                }
+            }
+        } else {
+            self.intel = None;
         }
         for hw in entries(&self.root.join("class/hwmon"), &mut self.diagnostics) {
             let source = text(&hw.join("name")).unwrap_or_else(|_| file_name(&hw));
@@ -138,8 +178,10 @@ impl Collector {
             let device_id = clean(&device.to_string_lossy());
             let kind = if matches!(source.as_str(), "coretemp" | "k10temp" | "zenpower") {
                 "CPU"
-            } else if matches!(source.as_str(), "amdgpu" | "nouveau" | "radeon")
-                || self.drm.iter().any(|d| d.id == device_id)
+            } else if matches!(
+                source.as_str(),
+                "amdgpu" | "nouveau" | "radeon" | "i915" | "xe"
+            ) || self.drm.iter().any(|d| d.id == device_id)
             {
                 "GPU"
             } else {
@@ -212,6 +254,20 @@ impl Collector {
                 }
             }
         }
+        let mut intel_readings = Vec::new();
+        if let Some(i) = &mut self.intel {
+            match i.sample() {
+                Ok((readings, diag)) => {
+                    intel_readings = readings;
+                    diagnostics.extend(diag);
+                }
+                Err(e) => {
+                    diagnostics.push(e.clone());
+                    self.diagnostics.push(e);
+                    self.intel = None;
+                }
+            }
+        }
         for d in &self.drm {
             let mut gpu = Gpu::unavailable(
                 d.id.clone(),
@@ -219,6 +275,31 @@ impl Collector {
                 "unsupported DRM",
                 "driver/backend unsupported or NVML unavailable",
             );
+            if d.intel {
+                gpu.backend = "Intel DRM / Sysman unavailable";
+                let reason = diagnostics
+                    .iter()
+                    .find(|s| s.starts_with("Intel"))
+                    .map(String::as_str)
+                    .unwrap_or(
+                        "Intel Sysman device unavailable; check driver, runtime and permissions",
+                    );
+                gpu.utilization = Err(reason.into());
+                gpu.memory = Err(reason.into());
+                gpu.power_watts = Err("Intel power not collected".into());
+                if let Some(r) = intel_readings
+                    .iter_mut()
+                    .find(|r| Some(&r.pci) == d.pci.as_ref())
+                {
+                    std::mem::swap(&mut gpu, &mut r.gpu);
+                    gpu.id = d.id.clone();
+                    gpu.name = d.name.clone();
+                    for mut s in r.sensors.drain(..) {
+                        s.device = d.id.clone();
+                        sensors.push(s);
+                    }
+                }
+            }
             if d.amd {
                 gpu.backend = "AMDGPU sysfs";
                 gpu.utilization = numeric(&d.path.join("gpu_busy_percent")).and_then(|v| {
@@ -271,6 +352,15 @@ impl Collector {
             diagnostics,
         }
     }
+}
+fn pci_name(s: &str) -> bool {
+    s.len() == 12
+        && s.as_bytes()[4] == b':'
+        && s.as_bytes()[7] == b':'
+        && s.as_bytes()[10] == b'.'
+        && s.bytes()
+            .enumerate()
+            .all(|(i, c)| matches!(i, 4 | 7 | 10) || c.is_ascii_hexdigit())
 }
 fn entries(path: &Path, diagnostics: &mut Vec<String>) -> Vec<PathBuf> {
     match fs::read_dir(path) {
@@ -329,29 +419,34 @@ pub(super) fn temperature(v: f64) -> Result<f64, String> {
         Err("invalid temperature value".into())
     }
 }
-pub fn doctor(frame: &HardwareFrame) {
-    println!("rtop hardware diagnostics (read-only)");
+pub fn doctor(frame: &HardwareFrame) -> std::io::Result<()> {
+    let mut out = std::io::stdout().lock();
+    writeln!(out, "rtop hardware diagnostics (read-only)")?;
     for d in &frame.diagnostics {
-        println!("INFO {d}");
+        writeln!(out, "INFO {d}")?;
     }
     for gpu in &frame.gpus {
-        println!("GPU {} | {} | {}", gpu.id, gpu.name, gpu.backend);
-        println!(
+        writeln!(out, "GPU {} | {} | {}", gpu.id, gpu.name, gpu.backend)?;
+        writeln!(
+            out,
             "  utilization: {:?}\n  VRAM used/total bytes: {:?}\n  power W: {:?}",
             gpu.utilization, gpu.memory, gpu.power_watts
-        );
+        )?;
     }
     for s in &frame.sensors {
-        println!(
+        writeln!(
+            out,
             "SENSOR {} | {} | {} | {} | {} | {:?} C | critical {:?}",
             s.id, s.device, s.kind, s.source, s.label, s.celsius, s.critical
-        );
+        )?;
     }
-    println!(
+    writeln!(
+        out,
         "COST GPU/discovery {:.3} ms; sensors {:.3} ms",
         frame.gpu_cost.as_secs_f64() * 1000.,
         frame.sensor_cost.as_secs_f64() * 1000.
-    );
+    )?;
+    out.flush()
 }
 #[cfg(test)]
 mod tests {
