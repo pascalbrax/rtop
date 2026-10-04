@@ -272,19 +272,9 @@ fn chart(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, ac
             (scale, unit, (peak / scale * 1.15).max(1.))
         }
     };
-    let chart_now = area_chart::scroll_end(
-        app.now,
-        app.chart_origin,
-        window,
-        if app.ascii {
-            area.width.min(120)
-        } else {
-            area.width
-        },
-    );
-    let first = history.segments(chart_now, window, interval, 0, scale);
+    let first = history.segments(app.now, window, interval, 0, scale);
     let second = if matches!(index, 2 | 3) {
-        history.segments(chart_now, window, interval, 1, scale)
+        history.segments(app.now, window, interval, 1, scale)
     } else {
         Vec::new()
     };
@@ -305,7 +295,7 @@ fn chart(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, ac
         let mut chars = vec![' '; width];
         for point in &history.points {
             if let Some(v) = point.values {
-                let age = chart_now.saturating_duration_since(point.at).as_secs_f64();
+                let age = app.now.saturating_duration_since(point.at).as_secs_f64();
                 if age <= window.as_secs_f64() && width > 0 {
                     let x =
                         ((1. - age / window.as_secs_f64()) * (width - 1) as f64).round() as usize;
@@ -332,21 +322,58 @@ fn chart(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, ac
         );
         return;
     }
-    let regions = Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).split(area);
+    let dim = blend(accent, p.surface, 0.17);
+    let grid = [
+        vec![(-window.as_secs_f64(), maximum * 0.5), (0., maximum * 0.5)],
+        vec![
+            (-window.as_secs_f64() * 0.5, 0.),
+            (-window.as_secs_f64() * 0.5, maximum),
+        ],
+    ];
+    let mut sets: Vec<_> = grid
+        .iter()
+        .map(|v| {
+            Dataset::default()
+                .graph_type(GraphType::Line)
+                .marker(ratatui::symbols::Marker::Braille)
+                .style(Style::default().fg(dim))
+                .data(v)
+        })
+        .collect();
+    for parts in [&first, &second] {
+        for segment in parts {
+            sets.push(
+                Dataset::default()
+                    .graph_type(if segment.len() == 1 {
+                        GraphType::Scatter
+                    } else {
+                        GraphType::Line
+                    })
+                    .marker(ratatui::symbols::Marker::Braille)
+                    .style(Style::default().fg(if std::ptr::eq(parts, &first) {
+                        accent
+                    } else {
+                        blend(accent, p.fg, 0.65)
+                    }))
+                    .data(segment),
+            );
+        }
+    }
     frame.render_widget(
-        Paragraph::new(title).style(Style::default().fg(p.muted)),
-        regions[0],
-    );
-    frame.render_widget(
-        area_chart::AreaChart {
-            first: &first,
-            second: &second,
-            x_bounds: [-window.as_secs_f64(), 0.],
-            maximum,
-            accent,
-            palette: p,
-        },
-        regions[1],
+        Chart::new(sets)
+            .block(Block::default().title(Span::styled(title, Style::default().fg(p.muted))))
+            .x_axis(
+                Axis::default()
+                    .bounds([-window.as_secs_f64(), 0.])
+                    .style(Style::default().fg(dim)),
+            )
+            .y_axis(
+                Axis::default()
+                    .bounds([0., maximum])
+                    .style(Style::default().fg(dim)),
+            )
+            .style(Style::default().bg(p.surface)),
+        area,
     );
 }
 

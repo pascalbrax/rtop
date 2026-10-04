@@ -1,3 +1,0 @@
-wall_s,cpu_s,rss_kib,threads,voluntary_switches,involuntary_switches,output_bytes
-5.001142,0.01,4096,4,8,0,23674
-65.001904,0.21,4096,4,98,0,75361
