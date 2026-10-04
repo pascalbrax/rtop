@@ -87,6 +87,8 @@ Ogni sezione ha un colore coerente su tab, titolo, bordo e grafico: CPU verde, G
 
 I grafici Unicode usano blocchi pieni e mezzi blocchi (`█▀▄`), più visibili dei punti Braille. Disco e rete sovrappongono la seconda serie come linea chiara; in modalità senza colore resta il contorno, in ASCII lo storico compatto. Anteprima con dati simulati: [grafici ad area](docs/previews/area-dark-120x40.svg). [Verifiche del renderer](docs/AREA-CHART-VERIFICATION.md).
 
+Lo scorrimento temporale avanza per colonne intere, con un riferimento comune per area e contorni: il solo trascorrere del tempo non deforma i picchi.
+
 Le serie reali hanno timestamp monotoni, unità e scale esplicite; lo storico contiene 120 campioni per default. Errori, reset e lacune temporali interrompono le curve; alla ripresa dalla pausa le basi delle velocità vengono reinizializzate. Le serie demo conservano una scala normalizzata.
 
 Il pannello processi mostra PID, nome, CPU% e RAM, con ordine CPU decrescente e righe alternate. Nella dashboard compaiono i primi processi che entrano nello spazio disponibile; con `7` e `Enter` si apre la vista dedicata. I valori dei processi sono simulati: la raccolta reale resta prevista in M5.

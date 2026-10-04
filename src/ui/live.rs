@@ -272,9 +272,19 @@ fn chart(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, ac
             (scale, unit, (peak / scale * 1.15).max(1.))
         }
     };
-    let first = history.segments(app.now, window, interval, 0, scale);
+    let chart_now = area_chart::scroll_end(
+        app.now,
+        app.chart_origin,
+        window,
+        if app.ascii {
+            area.width.min(120)
+        } else {
+            area.width
+        },
+    );
+    let first = history.segments(chart_now, window, interval, 0, scale);
     let second = if matches!(index, 2 | 3) {
-        history.segments(app.now, window, interval, 1, scale)
+        history.segments(chart_now, window, interval, 1, scale)
     } else {
         Vec::new()
     };
@@ -295,7 +305,7 @@ fn chart(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, ac
         let mut chars = vec![' '; width];
         for point in &history.points {
             if let Some(v) = point.values {
-                let age = app.now.saturating_duration_since(point.at).as_secs_f64();
+                let age = chart_now.saturating_duration_since(point.at).as_secs_f64();
                 if age <= window.as_secs_f64() && width > 0 {
                     let x =
                         ((1. - age / window.as_secs_f64()) * (width - 1) as f64).round() as usize;

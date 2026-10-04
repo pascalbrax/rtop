@@ -32,6 +32,7 @@ pub struct App {
     pub gpu_id: Option<String>,
     pub sensor_id: Option<String>,
     pub now: Instant,
+    pub chart_origin: Instant,
     pub config: Config,
     pub hostname: String,
     pub interface: Option<String>,
@@ -40,6 +41,7 @@ pub struct App {
 }
 impl App {
     pub fn new(light: bool, ascii: bool, no_color: bool) -> Self {
+        let now = Instant::now();
         Self {
             demo: true,
             live: None,
@@ -47,7 +49,8 @@ impl App {
             gpu_id: None,
             sensor_id: None,
             histories: std::array::from_fn(|_| History::new(120)),
-            now: Instant::now(),
+            now,
+            chart_origin: now,
             config: Config::default(),
             hostname: std::fs::read_to_string("/proc/sys/kernel/hostname")
                 .unwrap_or_else(|_| "linux".into())

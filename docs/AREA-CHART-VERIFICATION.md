@@ -12,7 +12,7 @@ Lavoro e memoria del raster dipendono dalla dimensione del terminale e dallo sto
 
 ## Verifiche
 
-- 20 test Rust superati, inclusi campioni isolati, compressione dei picchi, lacune, seconda serie, modalità senza colore, valori non finiti e aree piccole/vuote.
+- 21 test Rust superati, inclusi campioni isolati, compressione dei picchi, lacune, seconda serie, modalità senza colore, valori non finiti e aree piccole/vuote.
 - Test esistenti di layout e temi, errori/staleness hardware e assenza di GPU superati.
 - Formattazione e Clippy con warning come errori superati.
 - Smoke test su PTY: pausa senza redraw periodico, resize, input, uscita e ripristino del terminale superati.
@@ -45,3 +45,15 @@ Build release SHA-256 `557dfd7d51190c988d7bd4ef57a8e51f1153476290086b2c3faf8b224
 | Ripristino terminale | Verificato |
 
 Dati grezzi: [soak JSON](benchmarks/area-tui-soak.json), [campioni CSV](benchmarks/area-tui-soak.csv), [latenza](benchmarks/area-input-latency.json). La macchina locale ha una GPU Matrox senza backend supportato e sensori CPU disponibili. Queste misure verificano il renderer con collector reali, ma non sostituiscono un benchmark NVIDIA o Intel reale.
+
+## Correzione dello scorrimento
+
+La segnalazione utente ha evidenziato che l'arrotondamento delle coordinate X, effettuato campione per campione, spostava punti con fasi temporali diverse in frame diversi. Con dati fissi, il solo trascorrere del tempo poteva quindi deformare il contorno e disallinearlo dal resto della curva.
+
+Il bordo temporale del grafico ora avanza a passi di una colonna (`finestra / (larghezza - 1)`), rispetto a un'origine monotona fissata all'avvio dell'applicazione. Area, contorno e seconda serie condividono lo stesso riferimento. L'arrotondamento del bordo verso il futuro mantiene visibile il campione più recente; l'anticipo è inferiore a una colonna. Non si aggiungono timer o frame periodici. I timestamp dei campioni e i controlli di staleness conservano il tempo reale.
+
+Il test `frozen_series_scroll_as_one_image_without_deforming` riproduce il difetto senza l'allineamento e verifica con l'allineamento sia l'assenza di deformazioni fra passi sia la traslazione esatta di tutte le celle di entrambe le serie al passo successivo. I cambi di valore o di scala automatica possono comunque modificare la forma del grafico. I test di lacune, reset e campioni isolati restano attivi.
+
+Verifica release breve di regressione: [PTY 60 s](benchmarks/area-scroll-tui.json) e [latenza con warmup 5 s](benchmarks/area-scroll-input-latency.json). Queste prove brevi non sostituiscono la misura di 300 s e il test con storico pieno della versione iniziale sopra riportati.
+
+Build della correzione SHA-256 `0113dec373cea4b59e8029c21ea366b50831e4603d0e78dc47588a35858b7495`: 60 s misurati, CPU 0,333% di un core, RSS 4096 KiB invariata; latenza p95 4,45 ms su 40 input dopo 5 s di warmup. Terminale ripristinato. Misura breve locale senza GPU supportata, con storico parzialmente popolato; non confrontabile direttamente con la precedente prova a storico pieno.

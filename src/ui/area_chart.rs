@@ -1,5 +1,21 @@
 use super::{Palette, blend};
 use ratatui::{buffer::Buffer, layout::Rect, style::Style, widgets::Widget};
+use std::time::{Duration, Instant};
+
+/// Move the entire viewport by whole columns, rather than rounding each sample's
+/// fractional movement independently. Rounding up keeps the newest sample visible.
+pub(super) fn scroll_end(now: Instant, origin: Instant, window: Duration, width: u16) -> Instant {
+    if width <= 1 || window.is_zero() {
+        return now;
+    }
+    let step = (window.as_nanos() / u128::from(width - 1)).max(1);
+    let elapsed = now.saturating_duration_since(origin).as_nanos();
+    let snapped = elapsed.div_ceil(step) * step;
+    u64::try_from(snapped)
+        .ok()
+        .and_then(|nanos| origin.checked_add(Duration::from_nanos(nanos)))
+        .unwrap_or(now)
+}
 
 /// A two-pixels-per-cell area chart. Work is bounded by the visible terminal area.
 pub(super) struct AreaChart<'a> {
@@ -137,6 +153,69 @@ impl Widget for AreaChart<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn frozen_series_scroll_as_one_image_without_deforming() {
+        let origin = Instant::now();
+        let window = Duration::from_secs(12);
+        let palette = Palette::new(&crate::app::App::new(false, false, false));
+        let draw = |seconds: f64, align: bool| {
+            let end = if align {
+                scroll_end(origin + Duration::from_secs_f64(seconds), origin, window, 9)
+                    .duration_since(origin)
+                    .as_secs_f64()
+            } else {
+                seconds
+            };
+            let first = vec![
+                vec![(9., 90.), (10.1, 10.), (12.2, 75.), (14., 20.)]
+                    .into_iter()
+                    .map(|(at, value)| (at - end, value))
+                    .collect(),
+            ];
+            let second = vec![
+                vec![(9.3, 20.), (11.7, 80.), (13.1, 5.), (14.5, 40.)]
+                    .into_iter()
+                    .map(|(at, value)| (at - end, value))
+                    .collect(),
+            ];
+            let area = Rect::new(0, 0, 9, 8);
+            let mut buffer = Buffer::empty(area);
+            AreaChart {
+                first: &first,
+                second: &second,
+                x_bounds: [-12., 0.],
+                maximum: 100.,
+                accent: palette.sections[4],
+                palette: &palette,
+            }
+            .render(area, &mut buffer);
+            buffer
+        };
+        assert_ne!(
+            draw(15.1, false),
+            draw(15.4, false),
+            "reproduce the old per-point rounding defect"
+        );
+        let before = draw(15.1, true);
+        assert_eq!(
+            before,
+            draw(15.4, true),
+            "sub-column elapsed time must not deform the image"
+        );
+        let after = draw(16.6, true);
+        for y in 0..8 {
+            for x in 0..8 {
+                assert_eq!(
+                    before[(x + 1, y)],
+                    after[(x, y)],
+                    "all rows and both series must shift together"
+                );
+            }
+        }
+        assert_eq!(scroll_end(origin, origin, window, 0), origin);
+        assert_eq!(scroll_end(origin, origin, window, 1), origin);
+    }
+
     #[test]
     fn gaps_single_samples_and_peaks_remain_visible() {
         let segments = vec![vec![(0., 25.), (1., 75.)], vec![(4., 50.)]];
