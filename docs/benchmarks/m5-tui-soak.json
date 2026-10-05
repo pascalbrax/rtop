@@ -1,0 +1,23 @@
+{
+  "binary_sha256": "e845dd8dbff680dfe05e0cd03f20de37b3c88e6c45e4491670f7c6797c92f611",
+  "measured_wall_s": 300.0002393722534,
+  "cpu_percent_one_core": 0.2766664459124313,
+  "rss_start_kib": 4352,
+  "rss_end_kib": 4480,
+  "rss_tail_range_kib": 128,
+  "threads_max": 5,
+  "output_bytes": 629002,
+  "benchmark_windows": [
+    {
+      "run": 1,
+      "wall_s": 300.0002393722534,
+      "cpu_percent_one_core": 0.2766664459124313,
+      "rss_start_kib": 4352,
+      "rss_end_kib": 4480
+    }
+  ],
+  "restored_terminal": true,
+  "clock_ticks_per_second": 100,
+  "net_namespace": "net:[4026533561]",
+  "terminal": "drained PTY, 120x40, truecolor, 1 Hz; no graphical terminal emulator"
+}

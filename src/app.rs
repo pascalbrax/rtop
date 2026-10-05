@@ -16,6 +16,7 @@ pub const SECTIONS: [&str; 7] = [
     "Processes",
 ];
 pub struct App {
+    pub processes: crate::processes::View,
     pub selected: usize,
     pub focused: bool,
     pub help: bool,
@@ -41,6 +42,7 @@ pub struct App {
 impl App {
     pub fn new(light: bool, ascii: bool, no_color: bool) -> Self {
         Self {
+            processes: crate::processes::View::default(),
             demo: true,
             live: None,
             hardware: None,
@@ -315,6 +317,13 @@ impl App {
             self.histories[5].points.clear();
         }
     }
+    pub fn processes_visible(&self, width: u16, height: u16) -> bool {
+        !self.demo
+            && !self.help
+            && width >= 60
+            && height >= 18
+            && ((!self.focused && width >= 100 && height >= 32) || self.selected == 6)
+    }
     pub fn cpu(&self) -> u16 {
         (24 + self.sample.wrapping_mul(7) % 49) as u16
     }
@@ -324,9 +333,13 @@ impl App {
         self.history[59] = self.cpu() as u64;
     }
     pub fn key(&mut self, key: KeyEvent) -> bool {
-        if key.code == KeyCode::Char('q')
-            || (key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL))
-        {
+        if key.code == KeyCode::Char('c') && key.modifiers.contains(KeyModifiers::CONTROL) {
+            return true;
+        }
+        if !self.demo && !self.help && self.selected == 6 && self.processes.key(key) {
+            return false;
+        }
+        if key.code == KeyCode::Char('q') {
             return true;
         }
         if self.help {
@@ -379,6 +392,28 @@ fn pair(first: &Rate, second: &Rate) -> Option<[f64; 2]> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn process_visibility_and_filter_keyboard() {
+        let mut app = App::configured(Config::default(), false);
+        assert!(app.processes_visible(120, 40));
+        assert!(!app.processes_visible(80, 24));
+        app.selected = 6;
+        assert!(app.processes_visible(80, 24));
+        app.help = true;
+        assert!(!app.processes_visible(120, 40));
+        app.help = false;
+        app.focused = true;
+        app.selected = 0;
+        assert!(!app.processes_visible(120, 40));
+        app.selected = 6;
+        let key = |c| KeyEvent::new(c, KeyModifiers::NONE);
+        assert!(!app.key(key(KeyCode::Char('/'))));
+        assert!(!app.key(key(KeyCode::Char('q'))));
+        assert_eq!(app.processes.filter, "q");
+        app.key(key(KeyCode::Esc));
+        assert!(app.processes.filter.is_empty());
+        assert!(app.key(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL)));
+    }
     #[test]
     fn navigation_and_help() {
         let mut app = App::new(false, false, false);

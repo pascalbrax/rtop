@@ -1,0 +1,10 @@
+{
+  "process_proc": "/tmp/rtop-m5-fixtures/10000",
+  "section": 7,
+  "samples": 40,
+  "p50_ms": 1.5516914427280426,
+  "p95_ms": 7.968604564666748,
+  "max_ms": 10.44720783829689,
+  "history_warmup_s": 3.0,
+  "method": "theme key to target palette plus end-of-frame cursor-hide sequence, 120x40 drained PTY; live collectors"
+}

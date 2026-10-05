@@ -1,4 +1,5 @@
 mod live;
+mod process_table;
 use crate::app::{App, SECTIONS};
 use ratatui::{
     Frame,
@@ -133,7 +134,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
                     )
                 } else {
                     format!(
-                        " {} | {} | processes: DEMO",
+                        " {} | {}",
                         app.hostname,
                         if app.paused {
                             "PAUSED"
@@ -220,7 +221,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
             16,
         );
         frame.render_widget(Clear, popup);
-        frame.render_widget(Paragraph::new("KEYBOARD\n\nTab / arrows     Select section\n1 .. 7           Jump to section\nEnter / Esc      Focus / overview\nSpace            Pause sampling and redraws\nt                Light / dark theme\na                ASCII / Unicode\nc                Toggle colors\n? / Esc          Open / close help\nq / Ctrl-C       Quit\n\nGPU / thermals / processes are demo until M4/M5.")
+        frame.render_widget(Paragraph::new("KEYBOARD\n\nTab / arrows     Select section\n1 .. 7           Jump to section\nEnter / Esc      Focus / overview\nSpace            Pause sampling and redraws\nt                Light / dark theme\na                ASCII / Unicode\nc                Toggle colors\n? / Esc          Open / close help\nq / Ctrl-C       Quit\n\nProcesses: / filter, s sort, r reverse\nUp/Down, PgUp/PgDn (15), Home/End scroll")
             .style(Style::default().bg(p.bg).fg(p.fg)).block(Block::bordered().title(" Help ").border_set(border(app))), popup);
     }
 }
@@ -237,7 +238,7 @@ fn panel(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, de
                 " {} {}{} ",
                 index + 1,
                 SECTIONS[index],
-                if !app.demo && index == 6 {
+                if app.demo && index == 6 {
                     " / DEMO"
                 } else {
                     ""
@@ -263,7 +264,11 @@ fn panel(frame: &mut Frame, area: Rect, index: usize, app: &App, p: &Palette, de
         return;
     }
     if index == 6 {
-        process_table(frame, inner, p);
+        if app.demo {
+            process_table(frame, inner, p);
+        } else {
+            process_table::draw(frame, inner, app, p);
+        }
         return;
     }
     let usage = match index {
@@ -581,6 +586,40 @@ mod tests {
     use super::*;
     use ratatui::{Terminal, backend::TestBackend};
     #[test]
+    fn real_process_ascii_errors_and_rows() {
+        let mut app = App::configured(
+            crate::config::Config {
+                ascii: true,
+                ..Default::default()
+            },
+            false,
+        );
+        app.selected = 6;
+        app.processes.apply(crate::processes::Frame {
+            skipped: 2,
+            observation: crate::model::Observation {
+                at: std::time::Instant::now(),
+                cost: std::time::Duration::ZERO,
+                data: Ok(vec![crate::processes::Process {
+                    id: crate::processes::Identity { pid: 123, start: 1 },
+                    name: "name-�".into(),
+                    cpu: crate::model::Rate::Value(250.),
+                    rss: 1 << 20,
+                }]),
+            },
+        });
+        let mut terminal = Terminal::new(TestBackend::new(80, 24)).unwrap();
+        terminal.draw(|f| draw(f, &app)).unwrap();
+        let text = buffer_text(terminal.backend().buffer());
+        assert!(text.is_ascii());
+        assert!(text.contains("name-?"));
+        assert!(text.contains("250.0"));
+        assert!(!text.contains("DEMO"));
+        app.processes.frame.as_mut().unwrap().observation.data = Err("permission denied".into());
+        terminal.draw(|f| draw(f, &app)).unwrap();
+        assert!(buffer_text(terminal.backend().buffer()).contains("N/D: permission denied"));
+    }
+    #[test]
     fn layouts_themes_and_sections() {
         for (w, h) in [(80, 24), (120, 40), (160, 50), (60, 18)] {
             for (light, ascii, no_color) in [
@@ -620,8 +659,8 @@ mod tests {
         let text = buffer_text(terminal.backend().buffer());
         for label in [
             "LIVE / CPU RAM GPU DISK NET THERMALS",
-            "Processes / DEMO",
-            "Processes / DEMO",
+            "Processes",
+            "Collecting processes",
             "eth0",
             "sda",
             "2.0 GiB",

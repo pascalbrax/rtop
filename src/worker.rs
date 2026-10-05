@@ -211,6 +211,101 @@ impl Drop for HardwareWorker {
     }
 }
 
+pub struct ProcessWorker {
+    control: Arc<(Mutex<Control>, Condvar)>,
+    epoch: Arc<std::sync::atomic::AtomicU64>,
+    latest: Arc<Mutex<Option<crate::processes::Frame>>>,
+}
+impl ProcessWorker {
+    pub fn spawn(
+        sender: SyncSender<Message>,
+        interval: Duration,
+        root: std::path::PathBuf,
+    ) -> Self {
+        use std::sync::atomic::{AtomicU64, Ordering};
+        let control = Arc::new((
+            Mutex::new(Control {
+                paused: true,
+                stop: false,
+                epoch: 0,
+            }),
+            Condvar::new(),
+        ));
+        let latest = Arc::new(Mutex::new(None));
+        let epoch = Arc::new(AtomicU64::new(0));
+        let state = control.clone();
+        let slot = latest.clone();
+        let cancelled = epoch.clone();
+        thread::spawn(move || {
+            let mut collector = crate::processes::Collector::new(root);
+            let (lock, wake) = &*state;
+            let mut previous_epoch = 0;
+            loop {
+                let mut control = lock.lock().unwrap();
+                while control.paused && !control.stop {
+                    control = wake.wait(control).unwrap();
+                }
+                if control.stop {
+                    break;
+                }
+                let epoch = control.epoch;
+                if epoch != previous_epoch {
+                    collector.reset();
+                    previous_epoch = epoch;
+                }
+                drop(control);
+                let frame = collector.sample_until(|| cancelled.load(Ordering::Acquire) != epoch);
+                let control = lock.lock().unwrap();
+                if control.stop {
+                    break;
+                }
+                if !control.paused && control.epoch == epoch {
+                    *slot.lock().unwrap() = Some(frame);
+                    if matches!(
+                        sender.try_send(Message::Sample),
+                        Err(TrySendError::Disconnected(_))
+                    ) {
+                        break;
+                    }
+                }
+                if control.paused || control.epoch != epoch {
+                    continue;
+                }
+                let _ = wake.wait_timeout(control, interval).unwrap();
+            }
+        });
+        Self {
+            control,
+            epoch,
+            latest,
+        }
+    }
+    pub fn active(&self, active: bool) {
+        let (lock, wake) = &*self.control;
+        let mut state = lock.lock().unwrap();
+        if state.paused == active {
+            state.paused = !active;
+            state.epoch = state.epoch.wrapping_add(1);
+            self.epoch
+                .store(state.epoch, std::sync::atomic::Ordering::Release);
+            self.latest.lock().unwrap().take();
+            wake.notify_one();
+        }
+    }
+    pub fn take(&self) -> Option<crate::processes::Frame> {
+        self.latest.lock().unwrap().take()
+    }
+}
+impl Drop for ProcessWorker {
+    fn drop(&mut self) {
+        let (lock, wake) = &*self.control;
+        lock.lock().unwrap().stop = true;
+        self.epoch
+            .fetch_add(1, std::sync::atomic::Ordering::Release);
+        wake.notify_one();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

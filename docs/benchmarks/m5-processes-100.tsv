@@ -1,0 +1,4 @@
+run	samples	processes	skipped	cpu_percent_one_core	rss_peak_kib	collect_mean_ms	collect_max_ms	view_mean_ms
+1	5	100	0	0.042250	3456	0.813906	0.850848	0.014420
+2	5	100	0	0.048140	3456	0.928856	1.410956	0.015864
+3	5	100	0	0.042730	3456	0.822091	0.866196	0.014373

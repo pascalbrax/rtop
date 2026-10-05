@@ -1,0 +1,11 @@
+{
+  "process_actions": true,
+  "process_proc": "/tmp/rtop-m5-fixtures/10000",
+  "section": 7,
+  "samples": 40,
+  "p50_ms": 34.80060771107674,
+  "p95_ms": 47.85656929016113,
+  "max_ms": 56.21543526649475,
+  "history_warmup_s": 3.0,
+  "method": "filter entry/clear plus theme key to completed frame; 120x40 drained PTY; live collectors"
+}

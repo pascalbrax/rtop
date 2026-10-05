@@ -13,7 +13,7 @@ with tempfile.TemporaryDirectory(prefix='rtop-config-') as directory:
  assert result.returncode==0 and result.stdout.isascii()
  result=run('--preview','80x24','--ascii=false','--no-color=false','--theme','dark','--svg')
  assert result.returncode==0 and '#242522' in result.stdout and '╭' in result.stdout
- for text in ('interval=0','history=0','theme="unknown"','unknown_option=true','interval="fast"','filesystem_interval=0'):
+ for text in ('interval=0','history=0','theme="unknown"','unknown_option=true','interval="fast"','filesystem_interval=0','process_interval=0'):
   path.write_text(text);result=run()
   assert result.returncode!=0
   assert '\x1b[?1049h' not in result.stdout

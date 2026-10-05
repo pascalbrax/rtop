@@ -143,6 +143,81 @@ fn resources() -> io::Result<libc::rusage> {
     }
     Ok(unsafe { out.assume_init() })
 }
+
+pub fn benchmark_processes(
+    root: std::path::PathBuf,
+    interval: Duration,
+    warmup: u64,
+    duration: u64,
+    runs: u32,
+) -> io::Result<()> {
+    use std::io::Write;
+    let mut collector = crate::processes::Collector::new(root);
+    let mut view = crate::processes::View::default();
+    let mut out = io::BufWriter::new(io::stdout().lock());
+    writeln!(
+        out,
+        "run\tsamples\tprocesses\tskipped\tcpu_percent_one_core\trss_peak_kib\tcollect_mean_ms\tcollect_max_ms\tview_mean_ms"
+    )?;
+    for run in 1..=runs {
+        collector.reset();
+        let until = Instant::now() + Duration::from_secs(warmup);
+        while Instant::now() < until {
+            let frame = collector.sample();
+            if let Err(error) = &frame.observation.data {
+                return Err(io::Error::other(error.clone()));
+            }
+            view.apply(frame);
+            thread::sleep(interval);
+        }
+        let initial = resources()?;
+        let start = Instant::now();
+        let mut samples = 0;
+        let mut cost = 0.;
+        let mut maximum = 0f64;
+        let mut view_cost = 0.;
+        let mut skipped = 0;
+        while start.elapsed() < Duration::from_secs(duration) {
+            let deadline = Instant::now() + interval;
+            let frame = collector.sample();
+            if let Err(error) = &frame.observation.data {
+                return Err(io::Error::other(error.clone()));
+            }
+            let ms = frame.observation.cost.as_secs_f64() * 1000.;
+            cost += ms;
+            maximum = maximum.max(ms);
+            skipped += frame.skipped;
+            let before = Instant::now();
+            view.apply(frame);
+            view_cost += before.elapsed().as_secs_f64() * 1000.;
+            samples += 1;
+            thread::sleep(
+                deadline
+                    .min(start + Duration::from_secs(duration))
+                    .saturating_duration_since(Instant::now()),
+            );
+        }
+        let final_usage = resources()?;
+        let seconds = |u: &libc::rusage| {
+            u.ru_utime.tv_sec as f64
+                + u.ru_utime.tv_usec as f64 / 1e6
+                + u.ru_stime.tv_sec as f64
+                + u.ru_stime.tv_usec as f64 / 1e6
+        };
+        let cpu =
+            (seconds(&final_usage) - seconds(&initial)) / start.elapsed().as_secs_f64() * 100.;
+        writeln!(
+            out,
+            "{run}\t{samples}\t{}\t{skipped}\t{cpu:.6}\t{}\t{:.6}\t{maximum:.6}\t{:.6}",
+            view.rows.len(),
+            final_usage.ru_maxrss,
+            cost / samples as f64,
+            view_cost / samples as f64
+        )?;
+        out.flush()?;
+    }
+    Ok(())
+}
 fn cpu_seconds(r: &libc::rusage) -> f64 {
     r.ru_utime.tv_sec as f64
         + r.ru_stime.tv_sec as f64

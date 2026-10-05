@@ -2,13 +2,13 @@
 
 Monitor Linux da terminale scritto in Rust e Ratatui. Una dashboard ispirata a top/htop, con tema antracite, grafici colorati e raccolta progettata per consumare poca CPU.
 
-La dashboard mostra **CPU, RAM, rete e dischi reali**. GPU NVIDIA/AMD/Intel e temperature usano ora backend reali, con `N/D` per hardware assente o non supportato. Solo i processi restano simulati e indicati come `DEMO`, in attesa di M5. M3 integra worker, storico con timestamp e configurazione TOML.
+La dashboard mostra **CPU, RAM, rete e dischi reali**. GPU NVIDIA/AMD/Intel e temperature usano ora backend reali, con `N/D` per hardware assente o non supportato. Anche i processi usano dati reali di `/proc`, raccolti solo quando la tabella è visibile. M3 integra worker, storico con timestamp e configurazione TOML.
 
 ![Dashboard live di rtop](docs/previews/m4-live-dark-120x40.svg)
 
 ## Stato e prestazioni
 
-M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le fixture NVIDIA/AMD passano, un utente ha confermato su Debian discovery, utilizzo, VRAM e temperatura di una NVIDIA T1000 8GB; la potenza risulta non supportata. Intel `i915`/`xe` è supportato tramite Level Zero Sysman, in attesa del test su Fedora. Restano confronto delle metriche e benchmark GPU; il test AMD reale è in sospeso su richiesta dell'utente. La raccolta dei processi è prevista in M5. Il pannello processi occupa metà della fascia centrale, accanto alla memoria.
+M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le fixture NVIDIA/AMD passano, un utente ha confermato su Debian discovery, utilizzo, VRAM e temperatura di una NVIDIA T1000 8GB; la potenza risulta non supportata. Intel `i915`/`xe` è supportato tramite Level Zero Sysman, in attesa del test su Fedora. Restano confronto delle metriche e benchmark GPU; il test AMD reale è in sospeso su richiesta dell'utente. M5 completata: tabella processi reale, filtro, ordinamento e navigazione. Il pannello processi occupa metà della fascia centrale, accanto alla memoria.
 
 | Misura su PTY, collector base a 1 Hz | M3: base | M4: base + sensori CPU |
 | --- | --- | --- |
@@ -17,7 +17,7 @@ M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le 
 | Memoria residente finale | 3,75 MiB | 4,25 MiB |
 | Latenza input-render p95 | 5,57 ms | 4,97 ms |
 
-Build release su pseudo-terminale 120×40 drenato, truecolor, nel sandbox Linux di riferimento. M4 include dieci sensori CPU a intervalli di 2 secondi e una GPU Matrox non supportata. Il costo dell'emulatore grafico, di GPU supportate reali e dei futuri collector processi è escluso. Metodo, hardware e dati grezzi: [verifica M3](docs/M3-VERIFICATION.md) e [verifica M4](docs/M4-VERIFICATION.md).
+Build release su pseudo-terminale 120×40 drenato, truecolor, nel sandbox Linux di riferimento. M4 include dieci sensori CPU a intervalli di 2 secondi e una GPU Matrox non supportata. Il costo dell'emulatore grafico, di GPU supportate reali e dei collector processi (aggiunti in M5) è escluso da queste misure storiche. Metodo, hardware e dati grezzi: [verifica M3](docs/M3-VERIFICATION.md) e [verifica M4](docs/M4-VERIFICATION.md).
 
 ## Installazione
 
@@ -65,7 +65,8 @@ cargo build --release
 
 | Tasto | Azione |
 | --- | --- |
-| Tab / frecce | Seleziona sezione |
+| Tab / Sinistra / Destra | Seleziona sezione |
+| Su / Giù | Seleziona sezione; nel pannello processi scorre le righe |
 | Shift-Tab | Seleziona sezione precedente |
 | 1–7 | CPU, GPU, memoria, dischi, rete, temperature, processi |
 | Enter | Alterna dashboard e vista dedicata |
@@ -76,6 +77,9 @@ cargo build --release
 | c | Attiva/disattiva colori |
 | [ / ] | Cambia GPU, sensore, disco o interfaccia nel rispettivo pannello |
 | f | Cambia filesystem nel pannello dischi |
+| / | Filtro nome/PID nel pannello processi; Enter applica, Esc cancella |
+| s / r | Cicla CPU/RSS/PID/nome e inverte ordine nel pannello processi |
+| PgUp / PgDn, Home / End | Processi: 15 righe per pagina, primo/ultimo risultato |
 | ? | Aiuto |
 | q / Ctrl-C | Esce e ripristina il terminale |
 
@@ -87,7 +91,7 @@ Ogni sezione ha un colore coerente su tab, titolo, bordo e grafico: CPU verde, G
 
 Le serie reali hanno timestamp monotoni, unità e scale esplicite; lo storico contiene 120 campioni per default. Errori, reset e lacune temporali interrompono le curve; alla ripresa dalla pausa le basi delle velocità vengono reinizializzate. Le serie demo conservano una scala normalizzata.
 
-Il pannello processi mostra PID, nome, CPU% e RAM, con ordine CPU decrescente e righe alternate. Nella dashboard compaiono i primi processi che entrano nello spazio disponibile; con `7` e `Enter` si apre la vista dedicata. I valori dei processi sono simulati: la raccolta reale resta prevista in M5.
+Il pannello processi mostra PID, nome, CPU% e RAM, con ordine CPU decrescente e righe alternate. Nella dashboard compaiono i primi processi che entrano nello spazio disponibile; con `7` e `Enter` si apre la vista dedicata. La raccolta usa un worker separato e `process_interval` (default 2000 ms, limiti 1000–60000). Nascondere la tabella, aprire l’aiuto o mettere in pausa sospende le scansioni. Le frecce selezionano una riga dopo aver scelto il pannello con `7`; la selezione segue PID e tempo di avvio durante i riordinamenti. Durante la digitazione del filtro `q` è testo e Ctrl-C resta disponibile per uscire. CPU% è riferita a un core e può superare 100%; RSS è una stima della memoria residente, non la memoria esclusiva. Dettagli e budget: [verifica M5](docs/M5-VERIFICATION.md).
 
 ## Configurazione
 
@@ -124,7 +128,7 @@ cargo run -- --preview 120x40 --live-preview --svg --no-color=false > live.svg
 
 `--preview` usa il medesimo rendering della TUI attraverso `TestBackend`, senza richiedere un terminale interattivo. Le catture SVG conservano i colori delle celle; la resa dei glifi dipende dal font disponibile nel visualizzatore.
 
-- [Dashboard live scura](docs/previews/live-dark-120x40.svg)
+- [Dashboard live M5 scura](docs/previews/m5-live-dark-120x40.svg)
 - [Dashboard live chiara](docs/previews/live-light-120x40.svg)
 - [Prototipo scuro](docs/previews/dark-120x40.svg)
 - [Tema chiaro](docs/previews/light-120x40.svg)
@@ -133,7 +137,7 @@ cargo run -- --preview 120x40 --live-preview --svg --no-color=false > live.svg
 - [Dashboard 160×50](docs/previews/160x50.txt)
 - [ASCII senza colore](docs/previews/ascii-80x24.txt)
 
-Le anteprime standard restano fixture deterministiche; `--live-preview` raccoglie due campioni reali prima della cattura. Solo i processi conservano fixture nella dashboard live; GPU e temperature mancanti mostrano `N/D`.
+Le anteprime standard restano fixture deterministiche; `--live-preview` raccoglie due campioni reali prima della cattura. La dashboard live include processi reali quando la tabella è visibile; GPU e temperature mancanti mostrano `N/D`. Le catture live precedenti a M5 conservano la vecchia tabella demo.
 
 ## Verifica
 
@@ -145,6 +149,8 @@ cargo build
 python3 tests/terminal_smoke.py
 python3 tests/verify_collectors.py
 python3 tests/config_cli.py
+python3 tests/process_safety.py
+python3 tests/process_live.py
 python3 tests/intel_safety.py
 python3 tests/hardware_safety.py # richiede anche un compilatore C per la fixture NVML
 python3 tests/tui_latency.py --output docs/benchmarks/m4-input-latency.json

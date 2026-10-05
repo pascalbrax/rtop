@@ -17,6 +17,7 @@ pub struct Config {
     pub interval: u64,
     pub filesystem_interval: u64,
     pub hardware_interval: u64,
+    pub process_interval: u64,
     pub history: usize,
     pub theme: Theme,
     pub ascii: bool,
@@ -31,6 +32,7 @@ impl Default for Config {
             interval: 1000,
             filesystem_interval: 30000,
             hardware_interval: 2000,
+            process_interval: 2000,
             history: 120,
             theme: Theme::Dark,
             ascii: false,
@@ -84,6 +86,12 @@ impl Config {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 "hardware_interval must be 1000..60000 ms",
+            ));
+        }
+        if !(1000..=60000).contains(&self.process_interval) {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "process_interval must be 1000..60000 ms",
             ));
         }
         if !(10..=3600).contains(&self.history) {

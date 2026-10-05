@@ -5,6 +5,7 @@ mod hardware;
 mod headless;
 mod history;
 mod model;
+mod processes;
 mod ui;
 mod worker;
 
@@ -20,7 +21,7 @@ use std::{
 #[derive(Parser)]
 #[command(
     version,
-    about = "Linux monitor · live CPU/RAM/disks/network; NVIDIA/AMD/Intel GPU and sensors; processes are demo"
+    about = "Linux monitor · live CPU/RAM/disks/network; NVIDIA/AMD/Intel GPU, sensors and processes"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -39,6 +40,15 @@ struct Cli {
     disable_intel: bool,
     #[arg(long, value_parser=clap::value_parser!(u64).range(1000..=60000))]
     hardware_interval: Option<u64>,
+    /// Process sampling interval in ms; only while the table is visible.
+    #[arg(long, value_parser=clap::value_parser!(u64).range(1000..=60000))]
+    process_interval: Option<u64>,
+    /// Alternate proc tree for process monitoring or benchmark fixtures.
+    #[arg(long, default_value = "/proc")]
+    process_proc: std::path::PathBuf,
+    /// Benchmark process collection and sorting without the terminal.
+    #[arg(long, group = "benchmark_mode", conflicts_with = "preview")]
+    benchmark_processes: bool,
 
     #[arg(long, value_parser = clap::value_parser!(u64).range(100..=60000))]
     interval: Option<u64>,
@@ -69,7 +79,7 @@ struct Cli {
     #[arg(long, requires = "preview")]
     svg: bool,
     /// Collect real Linux metrics as TSV without starting the TUI.
-    #[arg(long, conflicts_with_all = ["preview", "benchmark", "benchmark_hardware"], value_parser = clap::value_parser!(u32).range(1..=3600))]
+    #[arg(long, conflicts_with_all = ["preview", "benchmark", "benchmark_hardware", "benchmark_processes"], value_parser = clap::value_parser!(u32).range(1..=3600))]
     collect: Option<u32>,
     /// Benchmark the base collectors without rendering.
     #[arg(long, group = "benchmark_mode", conflicts_with = "preview")]
@@ -116,6 +126,9 @@ fn main() -> io::Result<()> {
     if let Some(interval) = cli.hardware_interval {
         config.hardware_interval = interval;
     }
+    if let Some(interval) = cli.process_interval {
+        config.process_interval = interval;
+    }
     config.validate()?;
     if cli.doctor || matches!(cli.command, Some(Command::Doctor)) {
         let mut collector = hardware::Collector::new(cli.hardware_sysfs, cli.disable_nvml);
@@ -154,6 +167,15 @@ fn main() -> io::Result<()> {
             Duration::from_millis(config.filesystem_interval),
         );
     }
+    if cli.benchmark_processes {
+        return headless::benchmark_processes(
+            cli.process_proc,
+            Duration::from_millis(config.process_interval),
+            cli.warmup,
+            cli.duration,
+            cli.runs,
+        );
+    }
     let demo = cli.demo || cli.preview.is_some() && !cli.live_preview;
     let mut app = App::configured(config.clone(), demo);
     if let Some(section) = cli.section {
@@ -166,9 +188,23 @@ fn main() -> io::Result<()> {
         hardware.disable_intel(cli.disable_intel);
         collector.sample();
         hardware.sample();
+        let collect_processes = cli
+            .preview
+            .as_ref()
+            .and_then(|size| size.split_once('x'))
+            .and_then(|(w, h)| Some((w.parse::<u16>().ok()?, h.parse::<u16>().ok()?)))
+            .is_some_and(|(w, h)| app.processes_visible(w, h));
+        let mut processes =
+            collect_processes.then(|| processes::Collector::new(cli.process_proc.clone()));
+        if let Some(collector) = &mut processes {
+            collector.sample();
+        }
         std::thread::sleep(interval);
         let snapshot = collector.sample();
         app.apply_hardware(hardware.sample());
+        if let Some(collector) = &mut processes {
+            app.processes.apply(collector.sample());
+        }
         app.apply(model::LiveFrame {
             snapshot,
             filesystems: collector.filesystems.as_ref().unwrap().clone(),
@@ -210,6 +246,15 @@ fn main() -> io::Result<()> {
             cli.disable_intel,
         ))
     };
+    let process_worker = if demo {
+        None
+    } else {
+        Some(worker::ProcessWorker::spawn(
+            tx.clone(),
+            Duration::from_millis(config.process_interval),
+            cli.process_proc,
+        ))
+    };
     let worker = if demo {
         None
     } else {
@@ -222,6 +267,10 @@ fn main() -> io::Result<()> {
     let mut dirty = true;
     let mut demo_next = Instant::now() + interval;
     loop {
+        if let Some(worker) = &process_worker {
+            let size = terminal.size()?;
+            worker.active(app.processes_visible(size.width, size.height) && !app.paused);
+        }
         if dirty {
             terminal.draw(|frame| ui::draw(frame, &app))?;
             dirty = false;
@@ -264,6 +313,7 @@ fn main() -> io::Result<()> {
                     app.gpu_id.clone(),
                     app.sensor_id.clone(),
                 );
+                let process_revision = app.processes.revision;
                 let was_paused = app.paused;
                 if app.key(key) {
                     break;
@@ -282,7 +332,7 @@ fn main() -> io::Result<()> {
                     app.gpu_id.clone(),
                     app.sensor_id.clone(),
                 );
-                dirty |= before != after;
+                dirty |= before != after || process_revision != app.processes.revision;
                 if before.6 != app.no_color {
                     crossterm::style::force_color_output(!app.no_color);
                 }
@@ -324,6 +374,23 @@ fn main() -> io::Result<()> {
                 || !app.help
                     && ((!app.focused && size.width >= 100 && size.height >= 32)
                         || matches!(app.selected, 0 | 2 | 3 | 4));
+        }
+        if let Some(worker) = &process_worker {
+            let size = terminal.size()?;
+            let visible = app.processes_visible(size.width, size.height) && !app.paused;
+            worker.active(visible);
+            if let Some(frame) = worker.take()
+                && visible
+            {
+                app.processes.apply(frame);
+                app.now = Instant::now();
+                let dashboard = !app.focused && size.width >= 100 && size.height >= 32;
+                let coalesce = dashboard
+                    && config.interval <= config.process_interval
+                    && app.live.is_some()
+                    && !app.stale();
+                dirty |= !coalesce;
+            }
         }
         if let Some(worker) = &hardware_worker
             && let Some(frame) = worker.take()

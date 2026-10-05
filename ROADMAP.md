@@ -64,6 +64,8 @@ Strategie obbligatorie:
 
 Storico iniziale: 120 campioni per serie. Grafici con frequenze diverse devono rispettare i timestamp, senza rappresentare campioni distanti come equidistanti nel tempo.
 
+Per la tabella processi, M5 aggiunge un worker attivato dalla visibilità, una lettura di `stat` per PID e ordinamento/filtro memorizzati fra i redraw. Definizioni, misure per numerosità e budget: [M5-VERIFICATION.md](docs/M5-VERIFICATION.md).
+
 ## Sequenza di sviluppo
 
 1. **M1 — Design e prototipo:** validare aspetto e navigazione con dati simulati.

@@ -1,6 +1,6 @@
 # Milestone
 
-**M1 e M2 completate il 3 ottobre 2026** (`rtop 0.1.0`); **M3 completata il 4 ottobre 2026**; M4 è implementata e in validazione hardware; M5–M6 sono da avviare. Risultati M2: [collector e benchmark](docs/M2-VERIFICATION.md). Evidenze e limiti: [verifica M1](docs/M1-VERIFICATION.md). Questo documento definisce risultati e criteri di completamento. Visione e vincoli sono in [ROADMAP.md](ROADMAP.md).
+**M1 e M2 completate il 3 ottobre 2026** (`rtop 0.1.0`); **M3 completata il 4 ottobre 2026**; M4 è implementata e in validazione hardware; M5 completata il 5 ottobre 2026; M6 è da avviare. Risultati M2: [collector e benchmark](docs/M2-VERIFICATION.md). Evidenze e limiti: [verifica M1](docs/M1-VERIFICATION.md). Questo documento definisce risultati e criteri di completamento. Visione e vincoli sono in [ROADMAP.md](ROADMAP.md).
 
 ## M1 — Design e prototipo visivo
 
@@ -77,15 +77,17 @@
 
 **Risultato:** tabella processi navigabile, filtrabile e ordinabile.
 
-- [ ] Raccogliere PID, nome, CPU e RAM quando la vista li richiede.
-- [ ] Definire e documentare la percentuale CPU dei processi, incluso il caso oltre il 100%.
-- [ ] Gestire processi terminati durante la lettura e riutilizzo dei PID.
-- [ ] Implementare ordinamento, filtro, scrolling e selezione stabile.
-- [ ] Evitare letture di dettagli costosi per processi non selezionati.
-- [ ] Verificare il comportamento con molti processi e creare un benchmark dedicato.
-- [ ] Confermare che nascondere la vista sospenda la relativa raccolta.
+- [x] Raccogliere PID, nome, CPU e RAM quando la vista li richiede.
+- [x] Definire e documentare la percentuale CPU dei processi, incluso il caso oltre il 100%.
+- [x] Gestire processi terminati durante la lettura e riutilizzo dei PID.
+- [x] Implementare ordinamento, filtro, scrolling e selezione stabile.
+- [x] Evitare letture di dettagli costosi per processi non selezionati.
+- [x] Verificare il comportamento con molti processi e creare un benchmark dedicato.
+- [x] Confermare che nascondere la vista sospenda la relativa raccolta.
 
 **Completamento:** filtro e navigazione restano reattivi, selezione corretta dopo riordinamenti, raccolta assente quando non richiesta. Documentare il consumo a diverse numerosità di processi e fissare un budget basato sulle misure.
+
+**Verifica M5:** [metriche, test e benchmark](docs/M5-VERIFICATION.md). 22 test Rust e regressioni PTY/hardware superati. Dashboard reale: 300 s, CPU 0,277% di un core, RSS finale 4480 KiB, p95 input-render 2,72 ms. Con 10000 record simulati: CPU collector/vista massima 5,329% a 2 s, p95 sequenza filtro 47,86 ms. Zero letture stat mentre la tabella è nascosta, in pausa o con aiuto. M4 conserva la validazione hardware aperta; M5 è stata avviata su richiesta esplicita dell’utente.
 
 ## M6 — Rifinitura e prima release Linux
 
