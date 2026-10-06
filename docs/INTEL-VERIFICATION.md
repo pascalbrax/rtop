@@ -25,7 +25,24 @@ Il worker hardware, la frequenza predefinita di due secondi, discovery ogni 30 s
 
 ## Test utente HP ZBook — 6 ottobre 2026
 
-Fonte: output di `./target/release/rtop doctor` fornito dall'utente. Hardware dichiarato: HP ZBook, Intel Ultra 7 e Intel Arc; modello esatto CPU/GPU non fornito. Fedora era la distribuzione prevista per il test, ma distribuzione/versione, kernel, runtime e revisione del binario non sono specificati in questo report.
+Fonti: diagnostiche `doctor` con e senza `sudo` e informazioni di sistema fornite dall'utente.
+
+| Ambiente | Dato dichiarato |
+| --- | --- |
+| Portatile | HP ZBook Firefly 16 inch G11 Mobile Workstation PC |
+| Distribuzione | Fedora Linux 44, KDE Plasma Desktop Edition |
+| Kernel | `7.1.13-200.fc44.x86_64`, x86_64, PREEMPT_DYNAMIC; build 2 settembre 2026 |
+| CPU | Intel Core Ultra 7 155H, 22 CPU logiche riportate dal sistema |
+| GPU | Meteor Lake-P [Intel Arc Graphics], PCI `0000:00:02.0`, ID `8086:7d55`, driver `i915` dalla diagnostica |
+| BIOS | HP W70 Ver. 01.06.02, 9 maggio 2025 |
+
+Versioni del loader/runtime Intel e revisione del binario rtop ancora da registrare. Per i pacchetti Fedora:
+
+```bash
+rpm -q oneapi-level-zero intel-level-zero intel-compute-runtime
+```
+
+Un pacchetto assente nel risultato non prova che la libreria sia assente: il runtime può provenire da un altro pacchetto o da un'installazione manuale.
 
 | Voce | Utente normale | Con `sudo` |
 | --- | --- | --- |
@@ -45,7 +62,7 @@ Compare anche `Intel device PCI: Intel Sysman uninitialized (0x78000001)`: la di
 
 L'utente ha fornito anche l'esecuzione di `sudo ./target/release/rtop doctor`. L'errore di permessi scompare, ma non viene trovato un contatore engine root di tipo `ALL`, richiesto dal collector attuale per rappresentare l'utilizzo dell'intera GPU. Questo messaggio viene prodotto dopo l'enumerazione degli engine senza trovare quel gruppo; il report non elenca gli engine disponibili e non permette di concludere che ogni contatore GPU sia assente. Non è un caso di primo campione `collecting`.
 
-Il confronto dimostra che i privilegi da soli non rendono disponibili le metriche richieste. Temperatura GPU, memoria locale e diagnostica PCI `uninitialized` restano invariate. Non si attribuisce la causa esatta a hardware, kernel o versione del runtime senza ulteriori dati. Per valutare un'estensione del backend servono distribuzione/versione, `uname -r`, modello da `lspci -nnk` e versioni loader/runtime, oltre a un elenco dei gruppi engine effettivamente esposti. Non sono state applicate modifiche ai permessi o ai parametri del kernel.
+Il confronto dimostra che i privilegi da soli non rendono disponibili le metriche richieste. Temperatura GPU, memoria locale e diagnostica PCI `uninitialized` restano invariate. Non si attribuisce la causa esatta a hardware, kernel o versione del runtime senza ulteriori dati. Distribuzione, kernel e modello sono ora identificati. Per valutare un'estensione del backend restano da registrare versioni loader/runtime e un elenco dei gruppi engine effettivamente esposti. Non sono state applicate modifiche ai permessi o ai parametri del kernel.
 
 ## Prova su Fedora
 
@@ -126,7 +143,7 @@ python3 tests/tui_soak.py --seconds 300 --output docs/benchmarks/intel-absent-tu
 python3 tests/tui_latency.py --output docs/benchmarks/intel-input-latency.json
 ```
 
-Dopo il report ZBook, restano da registrare modello GPU esatto, distribuzione/kernel/runtime e revisione del binario; verificare le capacità engine effettive oltre al limite di permessi e le capacità di temperatura/memoria GPU; confrontare le metriche e misurare latenza e consumo sulla macchina Intel. La verifica AMD reale è in sospeso su richiesta dell'utente; il codice AMD e le sue fixture restano attivi.
+Dopo il report ZBook, restano da registrare versioni loader/runtime e revisione del binario; verificare le capacità engine effettive oltre al limite di permessi e le capacità di temperatura/memoria GPU; confrontare le metriche e misurare latenza e consumo sulla macchina Intel. La verifica AMD reale è in sospeso su richiesta dell'utente; il codice AMD e le sue fixture restano attivi.
 
 ## Riferimenti
 
