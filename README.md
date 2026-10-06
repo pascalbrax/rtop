@@ -8,7 +8,7 @@ La dashboard mostra **CPU, RAM, rete e dischi reali**. GPU NVIDIA/AMD/Intel e te
 
 ## Stato e prestazioni
 
-M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le fixture NVIDIA/AMD passano, un utente ha confermato su Debian discovery, utilizzo, VRAM e temperatura di una NVIDIA T1000 8GB; la potenza risulta non supportata. Intel `i915`/`xe` è supportato tramite Level Zero Sysman: su HP ZBook con Intel Arc sono confermati discovery `i915` e sensori CPU; utilizzo GPU bloccato dai permessi, temperatura GPU e VRAM locale indisponibili nel report. Restano confronto delle metriche e benchmark GPU; il test AMD reale è in sospeso su richiesta dell'utente. M5 completata: tabella processi reale, filtro, ordinamento e navigazione. Il pannello processi occupa metà della fascia centrale, accanto alla memoria.
+M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le fixture NVIDIA/AMD passano, un utente ha confermato su Debian discovery, utilizzo, VRAM e temperatura di una NVIDIA T1000 8GB; la potenza risulta non supportata. Intel `i915`/`xe` è supportato tramite Level Zero Sysman: su HP ZBook con Intel Arc sono confermati discovery `i915` e sensori CPU; utilizzo GPU negato senza privilegi e contatore aggregato assente anche con `sudo`; temperatura GPU e VRAM locale indisponibili nei report. Restano confronto delle metriche e benchmark GPU; il test AMD reale è in sospeso su richiesta dell'utente. M5 completata: tabella processi reale, filtro, ordinamento e navigazione. Il pannello processi occupa metà della fascia centrale, accanto alla memoria.
 
 | Misura su PTY, collector base a 1 Hz | M3: base | M4: base + sensori CPU |
 | --- | --- | --- |

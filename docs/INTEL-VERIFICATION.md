@@ -27,28 +27,25 @@ Il worker hardware, la frequenza predefinita di due secondi, discovery ogni 30 s
 
 Fonte: output di `./target/release/rtop doctor` fornito dall'utente. Hardware dichiarato: HP ZBook, Intel Ultra 7 e Intel Arc; modello esatto CPU/GPU non fornito. Fedora era la distribuzione prevista per il test, ma distribuzione/versione, kernel, runtime e revisione del binario non sono specificati in questo report.
 
-| Voce | Risultato osservato |
-| --- | --- |
-| Discovery Intel | `card1`, driver **i915**, PCI `0000:00:02.0`, ID `8086:7d55`, backend Level Zero Sysman |
-| Utilizzo GPU | `Intel Sysman insufficient permissions (0x70010000)` |
-| VRAM locale | `Intel device-local VRAM unavailable` |
-| Temperatura GPU | `Intel temperature sensors unavailable` |
-| Potenza GPU | Non raccolta dal backend Intel, come previsto |
-| Temperatura CPU | `coretemp`: package 37 °C, core 29–37 °C, limite critico dichiarato dal sensore 110 °C |
-| Altri sensori | ACPI, NVMe, DIMM `spd5118` e Wi-Fi enumerati come `Other`, senza attribuirli a CPU/GPU |
-| Costo singolo comando | GPU/discovery 44,009 ms; sensori 30,450 ms |
+| Voce | Utente normale | Con `sudo` |
+| --- | --- | --- |
+| Discovery Intel | `card1`, **i915**, PCI `0000:00:02.0`, ID `8086:7d55`, Level Zero Sysman | Invariata |
+| Utilizzo GPU | `Intel Sysman insufficient permissions (0x70010000)` | `Intel whole-device engine counter unavailable` |
+| VRAM locale | `Intel device-local VRAM unavailable` | Invariata |
+| Temperatura GPU | `Intel temperature sensors unavailable` | Invariata |
+| Potenza GPU | Non raccolta dal backend Intel | Invariata |
+| Temperatura CPU | Package 37 °C, core 29–37 °C | Package 35 °C, core 28–35 °C |
+| Limite critico CPU dichiarato dal sensore | 110 °C | 110 °C |
+| Altri sensori | ACPI, NVMe, DIMM `spd5118`, Wi-Fi come `Other` | Ancora enumerati come `Other` |
+| Costo singolo comando | GPU/discovery 44,009 ms; sensori 30,450 ms | GPU/discovery 44,954 ms; sensori 30,066 ms |
 
 Il comando termina con un report anche quando le metriche GPU non sono disponibili. Questo conferma discovery e lettura dei sensori CPU su hardware reale; non verifica stabilità della TUI, correttezza delle metriche GPU sotto carico o consumo continuativo. I costi di `doctor` comprendono discovery e non sono un benchmark del worker a regime.
 
 Compare anche `Intel device PCI: Intel Sysman uninitialized (0x78000001)`: la diagnosi PCI del runtime non è completamente riuscita, pur essendo presente il dispositivo DRM. L'assenza di NVML non riguarda il backend Intel. L'errore di permessi riguarda l'utilizzo GPU: non dimostra che VRAM e temperatura siano recuperabili con gli stessi permessi. L'assenza di memoria locale è compatibile con una GPU integrata; rtop non sostituisce la VRAM con RAM di sistema.
 
-Per distinguere una restrizione di accesso da altre limitazioni del runtime, confrontare una sola esecuzione diagnostica con privilegi:
+L'utente ha fornito anche l'esecuzione di `sudo ./target/release/rtop doctor`. L'errore di permessi scompare, ma non viene trovato un contatore engine root di tipo `ALL`, richiesto dal collector attuale per rappresentare l'utilizzo dell'intera GPU. Questo messaggio viene prodotto dopo l'enumerazione degli engine senza trovare quel gruppo; il report non elenca gli engine disponibili e non permette di concludere che ogni contatore GPU sia assente. Non è un caso di primo campione `collecting`.
 
-```bash
-sudo ./target/release/rtop doctor
-```
-
-È un controllo in sola lettura, non una configurazione necessaria per l'uso quotidiano. La [specifica Sysman](https://oneapi-src.github.io/level-zero-spec/level-zero/1.16.24/sysman/api.html) prevede errori di permessi per le letture degli engine; la [guida Sysman](https://oneapi-src.github.io/level-zero-spec/level-zero/1.11/sysman/PROG.html) documenta restrizioni di accesso su Linux. Registrare entrambi gli output insieme a `uname -r`, modello GPU (`lspci -nnk`) e versioni del loader/runtime prima di scegliere una correzione. Non sono state applicate modifiche ai permessi o ai parametri del kernel.
+Il confronto dimostra che i privilegi da soli non rendono disponibili le metriche richieste. Temperatura GPU, memoria locale e diagnostica PCI `uninitialized` restano invariate. Non si attribuisce la causa esatta a hardware, kernel o versione del runtime senza ulteriori dati. Per valutare un'estensione del backend servono distribuzione/versione, `uname -r`, modello da `lspci -nnk` e versioni loader/runtime, oltre a un elenco dei gruppi engine effettivamente esposti. Non sono state applicate modifiche ai permessi o ai parametri del kernel.
 
 ## Prova su Fedora
 
@@ -129,7 +126,7 @@ python3 tests/tui_soak.py --seconds 300 --output docs/benchmarks/intel-absent-tu
 python3 tests/tui_latency.py --output docs/benchmarks/intel-input-latency.json
 ```
 
-Dopo il report ZBook, restano da registrare modello GPU esatto, distribuzione/kernel/runtime e revisione del binario; verificare i permessi di utilizzo e le capacità effettive di temperatura/memoria GPU; confrontare le metriche e misurare latenza e consumo sulla macchina Intel. La verifica AMD reale è in sospeso su richiesta dell'utente; il codice AMD e le sue fixture restano attivi.
+Dopo il report ZBook, restano da registrare modello GPU esatto, distribuzione/kernel/runtime e revisione del binario; verificare le capacità engine effettive oltre al limite di permessi e le capacità di temperatura/memoria GPU; confrontare le metriche e misurare latenza e consumo sulla macchina Intel. La verifica AMD reale è in sospeso su richiesta dell'utente; il codice AMD e le sue fixture restano attivi.
 
 ## Riferimenti
 
