@@ -1,6 +1,6 @@
 # Intel Arc — backend e verifica
 
-Implementato il 4 ottobre 2026. Test utente previsto su Fedora; modello GPU ancora da identificare, driver kernel probabilmente `xe` (non ancora verificato). Non è stata eseguita una prova su Intel Arc reale nell'ambiente di sviluppo.
+Implementato il 4 ottobre 2026. Il 6 ottobre l'utente ha fornito una diagnostica reale da HP ZBook con Intel Ultra 7 e Intel Arc: discovery confermata con driver `i915`, ma metriche GPU ancora parzialmente indisponibili. Non è presente una GPU Intel nell'ambiente di sviluppo.
 
 ## Supporto e capacità
 
@@ -22,6 +22,33 @@ Il primo campione dei contatori è `collecting`; reset, assenza di progresso ed 
 Il worker hardware, la frequenza predefinita di due secondi, discovery ogni 30 secondi e slot singolo restano quelli di M4. Nessun subprocess periodico, scansione dei processi per stimare utilizzo GPU o scrittura ai controlli del dispositivo. Inizializzazione lenta ed errori del runtime non bloccano tastiera e collector di base.
 
 `rtop doctor` mostra il driver DRM Intel, indirizzo PCI, backend, metriche e motivi delle assenze. La chiusura anticipata della pipe di output termina normalmente, senza panic.
+
+## Test utente HP ZBook — 6 ottobre 2026
+
+Fonte: output di `./target/release/rtop doctor` fornito dall'utente. Hardware dichiarato: HP ZBook, Intel Ultra 7 e Intel Arc; modello esatto CPU/GPU non fornito. Fedora era la distribuzione prevista per il test, ma distribuzione/versione, kernel, runtime e revisione del binario non sono specificati in questo report.
+
+| Voce | Risultato osservato |
+| --- | --- |
+| Discovery Intel | `card1`, driver **i915**, PCI `0000:00:02.0`, ID `8086:7d55`, backend Level Zero Sysman |
+| Utilizzo GPU | `Intel Sysman insufficient permissions (0x70010000)` |
+| VRAM locale | `Intel device-local VRAM unavailable` |
+| Temperatura GPU | `Intel temperature sensors unavailable` |
+| Potenza GPU | Non raccolta dal backend Intel, come previsto |
+| Temperatura CPU | `coretemp`: package 37 °C, core 29–37 °C, limite critico dichiarato dal sensore 110 °C |
+| Altri sensori | ACPI, NVMe, DIMM `spd5118` e Wi-Fi enumerati come `Other`, senza attribuirli a CPU/GPU |
+| Costo singolo comando | GPU/discovery 44,009 ms; sensori 30,450 ms |
+
+Il comando termina con un report anche quando le metriche GPU non sono disponibili. Questo conferma discovery e lettura dei sensori CPU su hardware reale; non verifica stabilità della TUI, correttezza delle metriche GPU sotto carico o consumo continuativo. I costi di `doctor` comprendono discovery e non sono un benchmark del worker a regime.
+
+Compare anche `Intel device PCI: Intel Sysman uninitialized (0x78000001)`: la diagnosi PCI del runtime non è completamente riuscita, pur essendo presente il dispositivo DRM. L'assenza di NVML non riguarda il backend Intel. L'errore di permessi riguarda l'utilizzo GPU: non dimostra che VRAM e temperatura siano recuperabili con gli stessi permessi. L'assenza di memoria locale è compatibile con una GPU integrata; rtop non sostituisce la VRAM con RAM di sistema.
+
+Per distinguere una restrizione di accesso da altre limitazioni del runtime, confrontare una sola esecuzione diagnostica con privilegi:
+
+```bash
+sudo ./target/release/rtop doctor
+```
+
+È un controllo in sola lettura, non una configurazione necessaria per l'uso quotidiano. La [specifica Sysman](https://oneapi-src.github.io/level-zero-spec/level-zero/1.16.24/sysman/api.html) prevede errori di permessi per le letture degli engine; la [guida Sysman](https://oneapi-src.github.io/level-zero-spec/level-zero/1.11/sysman/PROG.html) documenta restrizioni di accesso su Linux. Registrare entrambi gli output insieme a `uname -r`, modello GPU (`lspci -nnk`) e versioni del loader/runtime prima di scegliere una correzione. Non sono state applicate modifiche ai permessi o ai parametri del kernel.
 
 ## Prova su Fedora
 
@@ -102,7 +129,7 @@ python3 tests/tui_soak.py --seconds 300 --output docs/benchmarks/intel-absent-tu
 python3 tests/tui_latency.py --output docs/benchmarks/intel-input-latency.json
 ```
 
-Restano da registrare modello GPU, versione Fedora/kernel/runtime, metriche disponibili, confronto con strumenti appropriati, latenza e consumo sulla macchina Fedora. La verifica AMD reale è in sospeso su richiesta dell'utente; il codice AMD e le sue fixture restano attivi.
+Dopo il report ZBook, restano da registrare modello GPU esatto, distribuzione/kernel/runtime e revisione del binario; verificare i permessi di utilizzo e le capacità effettive di temperatura/memoria GPU; confrontare le metriche e misurare latenza e consumo sulla macchina Intel. La verifica AMD reale è in sospeso su richiesta dell'utente; il codice AMD e le sue fixture restano attivi.
 
 ## Riferimenti
 

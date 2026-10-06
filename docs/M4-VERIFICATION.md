@@ -114,7 +114,7 @@ Il secondo dispositivo DRM (`card0`, vendor/device `0x1234 / 0x1111`) non ha un 
 
 La disponibilità di utilizzo, VRAM e temperatura è confermata. Il campione a 0% non verifica la risposta sotto carico; non è ancora disponibile un confronto con uno strumento di riferimento. La durata di doctor include la discovery e non misura il costo dei campioni periodici o il consumo CPU del monitor. Versione Debian, driver NVIDIA, versione/commit del binario, durata del test e benchmark CPU/RAM restano da documentare.
 
-M4 non è segnata come completata: restano la validazione delle metriche e il benchmark NVIDIA e il test Intel reale su Fedora. Il test AMD reale è in sospeso su richiesta dell'utente. Il backend Intel e le sue verifiche sono documentati in [INTEL-VERIFICATION.md](INTEL-VERIFICATION.md). Le fixture ABI/sysfs verificano la logica e gli errori, ma non sostituiscono questa validazione hardware. Nessun risultato di consumo viene esteso ai futuri collector processi di M5.
+M4 non è segnata come completata: restano la validazione delle metriche e il benchmark NVIDIA, oltre alla validazione delle metriche e del consumo Intel. Il report utente HP ZBook del 6 ottobre 2026 conferma discovery Intel Arc con `i915` e sensori CPU; utilizzo GPU restituisce permessi insufficienti, temperatura GPU e VRAM locale sono indisponibili. Il test AMD reale è in sospeso su richiesta dell'utente. Il backend Intel e le sue verifiche sono documentati in [INTEL-VERIFICATION.md](INTEL-VERIFICATION.md). Le fixture ABI/sysfs verificano la logica e gli errori, ma non sostituiscono questa validazione hardware. Nessun risultato di consumo viene esteso ai futuri collector processi di M5.
 
 ## Riferimenti delle interfacce
 
