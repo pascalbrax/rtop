@@ -36,13 +36,15 @@ Fonti: diagnostiche `doctor` con e senza `sudo` e informazioni di sistema fornit
 | GPU | Meteor Lake-P [Intel Arc Graphics], PCI `0000:00:02.0`, ID `8086:7d55`, driver `i915` dalla diagnostica |
 | BIOS | HP W70 Ver. 01.06.02, 9 maggio 2025 |
 
-Versioni del loader/runtime Intel e revisione del binario rtop ancora da registrare. Per i pacchetti Fedora:
+Versioni dei pacchetti installati, fornite dall'utente tramite `rpm -q`:
 
-```bash
-rpm -q oneapi-level-zero intel-level-zero intel-compute-runtime
-```
+| Pacchetto | Versione |
+| --- | --- |
+| `oneapi-level-zero` (loader) | `1.28.6-1.fc44.x86_64` |
+| `intel-level-zero` | `26.22.38646.6-4.fc44.x86_64` |
+| `intel-compute-runtime` | `26.22.38646.6-4.fc44.x86_64` |
 
-Un pacchetto assente nel risultato non prova che la libreria sia assente: il runtime può provenire da un altro pacchetto o da un'installazione manuale.
+Il runtime è installato e la diagnostica raggiunge l'enumerazione Sysman; la mancanza del contatore aggregato non viene attribuita a un pacchetto assente. Le versioni RPM identificano i pacchetti installati, senza verificare da sole il percorso delle librerie effettivamente caricate. La revisione del binario rtop resta non specificata.
 
 | Voce | Utente normale | Con `sudo` |
 | --- | --- | --- |
@@ -62,7 +64,7 @@ Compare anche `Intel device PCI: Intel Sysman uninitialized (0x78000001)`: la di
 
 L'utente ha fornito anche l'esecuzione di `sudo ./target/release/rtop doctor`. L'errore di permessi scompare, ma non viene trovato un contatore engine root di tipo `ALL`, richiesto dal collector attuale per rappresentare l'utilizzo dell'intera GPU. Questo messaggio viene prodotto dopo l'enumerazione degli engine senza trovare quel gruppo; il report non elenca gli engine disponibili e non permette di concludere che ogni contatore GPU sia assente. Non è un caso di primo campione `collecting`.
 
-Il confronto dimostra che i privilegi da soli non rendono disponibili le metriche richieste. Temperatura GPU, memoria locale e diagnostica PCI `uninitialized` restano invariate. Non si attribuisce la causa esatta a hardware, kernel o versione del runtime senza ulteriori dati. Distribuzione, kernel e modello sono ora identificati. Per valutare un'estensione del backend restano da registrare versioni loader/runtime e un elenco dei gruppi engine effettivamente esposti. Non sono state applicate modifiche ai permessi o ai parametri del kernel.
+Il confronto dimostra che i privilegi da soli non rendono disponibili le metriche richieste. Temperatura GPU, memoria locale e diagnostica PCI `uninitialized` restano invariate. Non si attribuisce la causa esatta a hardware, kernel o versione del runtime senza ulteriori dati. Distribuzione, kernel e modello sono ora identificati. Le versioni loader/runtime sono ora registrate; per valutare un'estensione del backend resta da ottenere un elenco dei gruppi engine effettivamente esposti. Non sono state applicate modifiche ai permessi o ai parametri del kernel.
 
 ## Prova su Fedora
 
@@ -143,7 +145,7 @@ python3 tests/tui_soak.py --seconds 300 --output docs/benchmarks/intel-absent-tu
 python3 tests/tui_latency.py --output docs/benchmarks/intel-input-latency.json
 ```
 
-Dopo il report ZBook, restano da registrare versioni loader/runtime e revisione del binario; verificare le capacità engine effettive oltre al limite di permessi e le capacità di temperatura/memoria GPU; confrontare le metriche e misurare latenza e consumo sulla macchina Intel. La verifica AMD reale è in sospeso su richiesta dell'utente; il codice AMD e le sue fixture restano attivi.
+Dopo il report ZBook, resta da registrare la revisione del binario; verificare le capacità engine effettive oltre al limite di permessi e le capacità di temperatura/memoria GPU; confrontare le metriche e misurare latenza e consumo sulla macchina Intel. La verifica AMD reale è in sospeso su richiesta dell'utente; il codice AMD e le sue fixture restano attivi.
 
 ## Riferimenti
 
