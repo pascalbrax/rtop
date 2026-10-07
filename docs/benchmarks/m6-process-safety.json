@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "fixture_processes": 64,
+  "checks": [
+    "inotify: zero reads while hidden",
+    "overview enables scans",
+    "filter and navigation",
+    "pause and help stop reads",
+    "q during blocked FIFO read",
+    "terminal restoration"
+  ],
+  "blocked_exit_ms_including_100ms_drain": 101.33882611989975
+}

@@ -4,7 +4,7 @@ Monitor Linux da terminale scritto in Rust e Ratatui. Una dashboard ispirata a t
 
 La dashboard mostra **CPU, RAM, rete e dischi reali**. GPU NVIDIA/AMD/Intel e temperature usano ora backend reali, con `N/D` per hardware assente o non supportato. Anche i processi usano dati reali di `/proc`, raccolti solo quando la tabella è visibile. M3 integra worker, storico con timestamp e configurazione TOML.
 
-![Dashboard live di rtop](docs/previews/m4-live-dark-120x40.svg)
+![Dashboard live di rtop](docs/previews/m5-live-dark-120x40.svg)
 
 ## Stato e prestazioni
 
@@ -18,6 +18,8 @@ M1, M2 e M3 completate. M4 implementata e in validazione: i test senza GPU e le 
 | Latenza input-render p95 | 5,57 ms | 4,97 ms |
 
 Build release su pseudo-terminale 120×40 drenato, truecolor, nel sandbox Linux di riferimento. M4 include dieci sensori CPU a intervalli di 2 secondi e una GPU Matrox non supportata. Il costo dell'emulatore grafico, di GPU supportate reali e dei collector processi (aggiunti in M5) è escluso da queste misure storiche. Metodo, hardware e dati grezzi: [verifica M3](docs/M3-VERIFICATION.md) e [verifica M4](docs/M4-VERIFICATION.md).
+
+M6 è in corso sulla versione candidata **0.1.0-rc.1**: contrasto, cinque profili terminali PTY, regressioni e packaging sono verificati; prova reale di 8 ore avviata e release finale ancora da validare. Stato e risultati: [verifica M6](docs/M6-VERIFICATION.md). Preparazione del pacchetto e limiti di compatibilità: [distribuzione Linux](docs/RELEASE.md).
 
 ## Installazione
 
@@ -37,7 +39,7 @@ cargo install --path . --locked
 rtop
 ```
 
-Non richiede privilegi root per le metriche attualmente implementate. Un terminale con supporto truecolor rende la palette completa; sono disponibili modalità ASCII e senza colore.
+Il monitor si avvia senza privilegi root; le singole metriche GPU dipendono dai permessi del driver/runtime e possono restare `N/D`. Un terminale con supporto truecolor rende la palette completa; sono disponibili modalità ASCII e senza colore.
 
 ## Avvio
 
@@ -147,6 +149,7 @@ cargo test
 cargo clippy --all-targets -- -D warnings
 cargo build
 python3 tests/terminal_smoke.py
+python3 tests/terminal_matrix.py
 python3 tests/verify_collectors.py
 python3 tests/config_cli.py
 python3 tests/process_safety.py
@@ -163,6 +166,16 @@ Il confronto live richiede Linux e gli strumenti `free`, `vmstat`, `ip` e `df`, 
 
 Il ciclo applicativo attende input o notifiche del worker, senza polling periodico della tastiera. Durante la pausa sospende la raccolta e attende input. Ratatui installa il panic hook di ripristino; una guardia ripristina il terminale anche quando il ciclo restituisce un errore.
 
+## Candidato Linux e licenza
+
+```bash
+python3 scripts/package_release.py
+```
+
+Genera in `dist/` il binario GNU per il target host, un archivio `.tar.gz`, checksum SHA-256, metadati di build e licenze delle dipendenze. Non pubblica una release. L'archivio locale non è una build Linux universale: target, libc e dipendenze dinamiche sono dichiarati in `BUILD-INFO.json`. Dettagli: [RELEASE.md](docs/RELEASE.md).
+
+Licenza [MIT](LICENSE). Il nome `rtop` è usato anche da altri progetti; questa distribuzione è identificata dal repository `pascalbrax/rtop`. Non viene pubblicata su crates.io con un nome omonimo. La CI verifica il candidato su Linux e conserva un artifact della build; il run breve non sostituisce il controllo di 8 ore.
+
 ## Piano
 
-[Roadmap](ROADMAP.md) · [Milestone](MILESTONES.md) · [Evidenze M1](docs/M1-VERIFICATION.md) · [Evidenze M2](docs/M2-VERIFICATION.md) · [Evidenze M3](docs/M3-VERIFICATION.md) · [Evidenze M4](docs/M4-VERIFICATION.md) · [Intel/Fedora](docs/INTEL-VERIFICATION.md)
+[Roadmap](ROADMAP.md) · [Milestone](MILESTONES.md) · [Evidenze M1](docs/M1-VERIFICATION.md) · [Evidenze M2](docs/M2-VERIFICATION.md) · [Evidenze M3](docs/M3-VERIFICATION.md) · [Evidenze M4](docs/M4-VERIFICATION.md) · [Intel/Fedora](docs/INTEL-VERIFICATION.md) · [Evidenze M5](docs/M5-VERIFICATION.md) · [M6 e release](docs/M6-VERIFICATION.md)

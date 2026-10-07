@@ -1,0 +1,38 @@
+{
+  "status": "PASS",
+  "scope": "drained PTY protocol profiles; no emulator/SSH claim",
+  "profiles": [
+    {
+      "term": "xterm-256color",
+      "ascii_no_color": false,
+      "resize_count": 21,
+      "terminal_restored": true
+    },
+    {
+      "term": "screen-256color",
+      "ascii_no_color": false,
+      "resize_count": 21,
+      "terminal_restored": true
+    },
+    {
+      "term": "linux",
+      "ascii_no_color": true,
+      "resize_count": 21,
+      "terminal_restored": true
+    },
+    {
+      "term": "vt100",
+      "ascii_no_color": true,
+      "resize_count": 21,
+      "terminal_restored": true
+    },
+    {
+      "term": "dumb",
+      "ascii_no_color": true,
+      "resize_count": 21,
+      "terminal_restored": true
+    }
+  ],
+  "redirected_output_error_before_terminal_init": true,
+  "headless_without_tty": true
+}

@@ -1,0 +1,11 @@
+{
+  "process_actions": false,
+  "process_proc": null,
+  "section": null,
+  "samples": 40,
+  "p50_ms": 1.8602050840854645,
+  "p95_ms": 2.541232854127884,
+  "max_ms": 4.081845283508301,
+  "history_warmup_s": 125.0,
+  "method": "theme key to target palette plus end-of-frame cursor-hide sequence; 120x40 drained PTY; live collectors"
+}

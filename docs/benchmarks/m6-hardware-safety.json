@@ -1,0 +1,6 @@
+{
+  "status": "PASS",
+  "cases": "empty sysfs, unsupported DRM, NVML zero/init/count/permission/null/unsupported/lost/invalid/missing optional symbols, slow init",
+  "slow_backend_exit_s": 0.0033566653728485107,
+  "terminal_restored": true
+}

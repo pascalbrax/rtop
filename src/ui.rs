@@ -586,6 +586,49 @@ mod tests {
     use super::*;
     use ratatui::{Terminal, backend::TestBackend};
     #[test]
+    fn palette_text_contrast_and_monochrome() {
+        fn luminance(c: Color) -> f64 {
+            let Color::Rgb(r, g, b) = c else {
+                panic!("RGB required")
+            };
+            let linear = |v: u8| {
+                let v = f64::from(v) / 255.;
+                if v <= 0.04045 {
+                    v / 12.92
+                } else {
+                    ((v + 0.055) / 1.055).powf(2.4)
+                }
+            };
+            0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b)
+        }
+        let contrast = |a, b| {
+            let (a, b) = (luminance(a), luminance(b));
+            (a.max(b) + 0.05) / (a.min(b) + 0.05)
+        };
+        for light in [false, true] {
+            let app = App::new(light, false, false);
+            let p = Palette::new(&app);
+            for fg in [p.fg, p.muted].into_iter().chain(p.sections) {
+                for bg in [p.bg, p.surface] {
+                    assert!(
+                        contrast(fg, bg) >= 4.5,
+                        "insufficient text contrast: {fg:?}/{bg:?}"
+                    );
+                }
+            }
+            for (i, color) in p.sections.iter().enumerate() {
+                assert!(!p.sections[..i].contains(color));
+            }
+        }
+        let app = App::new(false, false, true);
+        let mut terminal = Terminal::new(TestBackend::new(120, 40)).unwrap();
+        terminal.draw(|f| draw(f, &app)).unwrap();
+        for cell in &terminal.backend().buffer().content {
+            assert_eq!(cell.fg, Color::Reset);
+            assert_eq!(cell.bg, Color::Reset);
+        }
+    }
+    #[test]
     fn real_process_ascii_errors_and_rows() {
         let mut app = App::configured(
             crate::config::Config {

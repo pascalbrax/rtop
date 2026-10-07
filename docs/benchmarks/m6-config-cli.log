@@ -1,0 +1,1 @@
+PASS: TOML, CLI precedence, NO_COLOR override, strict keys/types/bounds and pre-terminal errors

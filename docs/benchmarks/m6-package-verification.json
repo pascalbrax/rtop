@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "version": "0.1.0-rc.1",
+  "target": "x86_64-unknown-linux-gnu",
+  "binary_sha256": "5762ad981a8b85de9b56f219bc8dbe02957d63ca5a69bd1379a2d0dde2c7b9e2",
+  "dependencies_with_notices": 75,
+  "checks": [
+    "archive checksum",
+    "binary checksum",
+    "extract",
+    "licenses",
+    "packaged version",
+    "doctor without GPU",
+    "headless collection"
+  ]
+}

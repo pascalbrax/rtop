@@ -1,0 +1,4 @@
+run,wall_s,cpu_percent_one_core,samples,rss_start_kib,rss_end_kib,collection_p95_us,gpu_discovery_mean_us,sensor_mean_us,gpu_devices,supported_gpus,sensors,sensor_errors
+1,10.000087,0.044570,5,3584,3584,1132,5,1014,1,0,10,0
+2,10.000103,0.054079,5,3584,3584,1389,6,1197,1,0,10,0
+3,10.000070,0.040540,5,3584,3584,1173,129,869,1,0,10,0

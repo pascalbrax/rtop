@@ -1,9 +1,12 @@
 [package]
 name = "rtop"
-version = "0.1.0"
+version = "0.1.0-rc.1"
 edition = "2024"
 description = "A low-overhead Linux terminal monitor with live metrics and hardware diagnostics"
 license = "MIT"
+repository = "https://github.com/pascalbrax/rtop"
+readme = "README.md"
+publish = false
 
 [dependencies]
 ratatui = "0.29"

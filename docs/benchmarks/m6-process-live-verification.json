@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "reference_cpu_percent": 100.02273333264714,
+  "table_cpu_percent": 100.9,
+  "rss_mib": 9.0,
+  "method": "single busy child; independent /proc tick delta and wall time bracketing a 1s live preview; tolerance 15 percentage points"
+}

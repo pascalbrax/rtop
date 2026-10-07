@@ -1,6 +1,6 @@
 # Milestone
 
-**M1 e M2 completate il 3 ottobre 2026** (`rtop 0.1.0`); **M3 completata il 4 ottobre 2026**; M4 è implementata e in validazione hardware; M5 completata il 5 ottobre 2026; M6 è da avviare. Risultati M2: [collector e benchmark](docs/M2-VERIFICATION.md). Evidenze e limiti: [verifica M1](docs/M1-VERIFICATION.md). Questo documento definisce risultati e criteri di completamento. Visione e vincoli sono in [ROADMAP.md](ROADMAP.md).
+**M1 e M2 completate il 3 ottobre 2026** (`rtop 0.1.0`); **M3 completata il 4 ottobre 2026**; M4 è implementata e in validazione hardware; M5 completata il 5 ottobre 2026; M6 avviata il 7 ottobre 2026, candidato `0.1.0-rc.1`; sessione di stabilità di 8 ore in corso. Risultati M2: [collector e benchmark](docs/M2-VERIFICATION.md). Evidenze e limiti: [verifica M1](docs/M1-VERIFICATION.md). Questo documento definisce risultati e criteri di completamento. Visione e vincoli sono in [ROADMAP.md](ROADMAP.md).
 
 ## M1 — Design e prototipo visivo
 
@@ -38,7 +38,7 @@
 
 **Risultato:** monitor usabile per CPU, RAM, dischi e rete.
 
-- [x] Collegare collector e UI con canale limitato e politica dell'ultimo snapshot.q
+- [x] Collegare collector e UI con canale limitato e politica dell'ultimo snapshot.
 - [x] Implementare storico circolare di 120 campioni e grafici basati sui timestamp.
 - [x] Disegnare solo quando input, resize o dati visibili lo richiedono.
 - [x] Implementare selezione pannelli, pausa, aiuto e layout adattivo.
@@ -96,17 +96,23 @@
 
 **Risultato:** release documentata, distribuibile e verificata.
 
-- [ ] Revisionare contrasto, modalità senza colore, ASCII e coerenza delle unità.
-- [ ] Verificare terminali diversi, resize ripetuti e uscita con Ctrl-C/errori.
+- [x] Revisionare contrasto, modalità senza colore, ASCII e coerenza delle unità; conservare i grafici a dots.
+- [x] Verificare cinque profili TERM su PTY, resize ripetuti e uscita con Ctrl-C/errori.
+- [ ] Completare prove visuali su emulatori grafici reali; i profili PTY non le sostituiscono.
 - [ ] Eseguire una sessione prolungata di almeno 8 ore e controllare memoria e stabilità.
-- [ ] Profilare e correggere i principali costi CPU; ripetere solo i benchmark interessati dalle modifiche.
-- [ ] Pubblicare risultati separati per dashboard base, GPU e processi.
-- [ ] Completare test significativi, `cargo fmt --check`, `cargo clippy` e CI.
-- [ ] Documentare installazione, scorciatoie, configurazione, metriche e compatibilità hardware.
-- [ ] Verificare nome del progetto, licenza e dipendenze prima della pubblicazione.
-- [ ] Preparare binario Linux e note di release con limiti conosciuti.
+- [x] Misurare i costi per gruppo di collector e latenza; nessun costo oltre budget che giustifichi modifiche ai collector.
+- [ ] Confermare il budget della dashboard nel report finale di 8 ore.
+- [x] Documentare risultati separati base, hardware/sensori e processi, con limiti espliciti; benchmark GPU supportate reali ancora in M4.
+- [x] Completare test significativi, `cargo fmt --check`, `cargo clippy` e configurare la CI.
+- [ ] Verificare esito della CI remota.
+- [x] Documentare installazione, scorciatoie, configurazione, metriche e compatibilità hardware.
+- [x] Verificare nome e licenze; conservare `pascalbrax/rtop`, evitare pubblicazione omonima su crates.io e includere licenze dei crate nel pacchetto.
+- [x] Preparare candidato GNU Linux x86_64 e note di release con limiti conosciuti.
+- [ ] Finalizzare tag/release dopo le verifiche richieste.
 
 **Completamento:** tutte le categorie previste sono implementate, assenze gestite correttamente, verifiche richieste concluse e risultati di prestazione pubblicati con ambiente e metodo. Ogni limite hardware resta esplicito.
+
+**Verifica M6 in corso:** [report e limiti](docs/M6-VERIFICATION.md), [distribuzione](docs/RELEASE.md). 23 test Rust e regressioni hardware/processi superati. Cinque profili TERM, 21 resize ciascuno; p95 input-render 2,54 ms. Collector base nei tre profili brevi: 0,1133–0,1364% di un core. Il soak di 8 ore e le verifiche residue non sono dichiarati conclusi.
 
 ## Dopo la prima release
 

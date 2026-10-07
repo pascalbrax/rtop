@@ -14,7 +14,7 @@ use clap::Parser;
 use crossterm::event::{Event, KeyEventKind};
 use ratatui::{Terminal, backend::TestBackend};
 use std::{
-    io,
+    io::{self, IsTerminal},
     time::{Duration, Instant},
 };
 
@@ -230,9 +230,16 @@ fn main() -> io::Result<()> {
         }
         return Ok(());
     }
-    // init installs the restoring panic hook; guard covers normal exit and errors.
-    let mut terminal = ratatui::init();
+    if !io::stdin().is_terminal() || !io::stdout().is_terminal() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "interactive mode requires terminal stdin and stdout; use --collect, --preview or doctor",
+        ));
+    }
+    // Cover partial initialization as well as draw/input errors and normal exit.
+    // try_init installs Ratatui's restoring panic hook.
     let _guard = Restore;
+    let mut terminal = ratatui::try_init()?;
     let (tx, rx) = std::sync::mpsc::sync_channel(32);
     worker::input(tx.clone());
     let hardware_worker = if demo {

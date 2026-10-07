@@ -1,0 +1,52 @@
+name: Linux checks and candidate
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Toolchain
+        run: |
+          rustup toolchain install 1.95.0 --profile minimal --component rustfmt --component clippy
+          rustup override set 1.95.0
+      - name: Rust checks
+        run: |
+          cargo fmt --check
+          cargo test --locked
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo build --locked
+          cargo build --release --locked
+      - name: Terminal, config and hardware regressions
+        run: |
+          python3 tests/terminal_smoke.py
+          python3 tests/terminal_matrix.py
+          python3 tests/config_cli.py
+          python3 tests/process_safety.py
+          python3 tests/process_live.py
+          python3 tests/intel_safety.py
+          python3 tests/hardware_safety.py
+      - name: Short stability regression (not the 8 hour release check)
+        run: python3 tests/tui_soak.py --seconds 120 --warmup 30 --output target/ci-soak
+      - name: Package candidate
+        env:
+          RTOP_SOURCE_REVISION: ${{ github.sha }}
+        run: |
+          python3 scripts/package_release.py
+          python3 tests/package_smoke.py dist/rtop-0.1.0-rc.1-x86_64-unknown-linux-gnu.tar.gz
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: rtop-linux-candidate
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
