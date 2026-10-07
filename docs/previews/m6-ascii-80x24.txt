@@ -1,7 +1,7 @@
- rtop / observatory     SIMULATED DATA                                          
- linux-demo | sample 0000 | DEMO RUNNING                                        
- 1 CPU   2 GPU   3 Memory   4 Storage   5 Network   6 Thermals   7 Processes    
-                                                                                
+ rtop / observatory     SIMULATED DATA
+ linux-demo | sample 0000 | DEMO RUNNING
+ 1 CPU   2 GPU   3 Memory   4 Storage   5 Network   6 Thermals   7 Processes
+
 + 1 CPU -----------------------------------------------------------------------+
 |# # # # # # # # . . . . . . . . . . . . . . . . . . . . . . . . . . . .  24%  |
 | 24%  total     3.42 GHz                                                      |
@@ -20,6 +20,5 @@
 |                                                                              |
 |                                                                              |
 +------------------------------------------------------------------------------+
- q quit  ? help  Tab select  Enter focus  Space pause                           
- t theme   a ASCII   c color   |   SIMULATED DATA                               
-
+ q quit  ? help  Tab select  Enter focus  Space pause
+ t theme   a ASCII   c color   |   SIMULATED DATA

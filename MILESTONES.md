@@ -98,13 +98,14 @@
 
 - [x] Revisionare contrasto, modalità senza colore, ASCII e coerenza delle unità; conservare i grafici a dots.
 - [x] Verificare cinque profili TERM su PTY, resize ripetuti e uscita con Ctrl-C/errori.
-- [ ] Completare prove visuali su emulatori grafici reali; i profili PTY non le sostituiscono.
+- [x] Registrare prova d’uso reale dell’utente: Gentoo via SSH con Windows Terminal.
+- [ ] Confermare versioni e singoli controlli visuali nel terminale reale; i profili PTY non li sostituiscono.
 - [ ] Eseguire una sessione prolungata di almeno 8 ore e controllare memoria e stabilità.
 - [x] Misurare i costi per gruppo di collector e latenza; nessun costo oltre budget che giustifichi modifiche ai collector.
 - [ ] Confermare il budget della dashboard nel report finale di 8 ore.
 - [x] Documentare risultati separati base, hardware/sensori e processi, con limiti espliciti; benchmark GPU supportate reali ancora in M4.
 - [x] Completare test significativi, `cargo fmt --check`, `cargo clippy` e configurare la CI.
-- [ ] Verificare esito della CI remota.
+- [x] Verificare esito della CI remota sul candidato `73a6e29`: tutti i controlli e artifact passati.
 - [x] Documentare installazione, scorciatoie, configurazione, metriche e compatibilità hardware.
 - [x] Verificare nome e licenze; conservare `pascalbrax/rtop`, evitare pubblicazione omonima su crates.io e includere licenze dei crate nel pacchetto.
 - [x] Preparare candidato GNU Linux x86_64 e note di release con limiti conosciuti.

@@ -58,6 +58,6 @@ python3 tests/tui_soak.py --seconds 28800 --warmup 30 --output docs/benchmarks/m
 
 Il test usa una PTY drenata 120×40, collector base a 1 Hz e hardware/processi a 2 s, con una sola istanza dell'app. Il budget locale è ≤0,5% di un core, range RSS finale ≤256 KiB, range RSS completo ≤1 MiB e massimo 5 thread. I report distinguono `running`, `passed` e `failed`; un report JSON da solo non significa che gli assert siano passati. Il costo del terminale grafico/SSH e delle GPU supportate assenti nell'ambiente locale resta escluso.
 
-I profili `TERM` testati in PTY non sostituiscono prove visuali su Konsole, GNOME Terminal o altri emulatori reali. `--ascii --no-color` è il fallback esplicito per terminali semplici; non viene promessa un'autodetection delle capacità.
+I profili `TERM` testati in PTY non sostituiscono prove visuali nei terminali reali. L’utente ha riferito una prova d’uso su Gentoo via SSH con Windows Terminal; versioni e singoli controlli visuali non sono specificati. `--ascii --no-color` è il fallback esplicito per terminali semplici; non viene promessa un'autodetection delle capacità.
 
 Stato e risultati: [M6-VERIFICATION.md](M6-VERIFICATION.md). Compatibilità Intel osservata: [INTEL-VERIFICATION.md](INTEL-VERIFICATION.md). AMD reale rimane sospesa su richiesta dell'utente; NVIDIA e Intel conservano la validazione M4 aperta.

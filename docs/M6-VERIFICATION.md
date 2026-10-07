@@ -12,7 +12,7 @@ L'avvio interattivo controlla stdin e stdout prima di modificare il terminale: u
 
 Report: [smoke](benchmarks/m6-terminal-smoke.log), [configurazione](benchmarks/m6-config-cli.log), [processi](benchmarks/m6-process-safety.json), [Intel](benchmarks/m6-intel-safety.json), [hardware](benchmarks/m6-hardware-safety.json).
 
-Il test [terminal_matrix.py](../tests/terminal_matrix.py) usa una PTY drenata con profili `xterm-256color`, `screen-256color`, `linux`, `vt100` e `dumb` (fallback ASCII/senza colore per gli ultimi tre), 21 resize per profilo, pausa, sezioni, aiuto e uscita q/Ctrl-C. Sono verifiche di protocollo; non sono state eseguite prove visuali in emulatori grafici reali. Tutti e cinque i profili superano il controllo, compreso ripristino del terminale e assenza di SGR colorati in modalità senza colore. Report: [matrice terminali](benchmarks/m6-terminal-matrix.json).
+Il test [terminal_matrix.py](../tests/terminal_matrix.py) usa una PTY drenata con profili `xterm-256color`, `screen-256color`, `linux`, `vt100` e `dumb` (fallback ASCII/senza colore per gli ultimi tre), 21 resize per profilo, pausa, sezioni, aiuto e uscita q/Ctrl-C. Sono verifiche di protocollo; il 7 ottobre l’utente ha riferito una prova d’uso reale su Gentoo via SSH con Windows Terminal. Versioni del client SSH/Windows Terminal e risultati specifici di tema chiaro/scuro, ASCII, resize e Ctrl-C non sono forniti: la prova d’uso viene registrata senza attribuirle tutti gli esiti dei test automatici. Tutti e cinque i profili superano il controllo, compreso ripristino del terminale e assenza di SGR colorati in modalità senza colore. Report: [matrice terminali](benchmarks/m6-terminal-matrix.json).
 
 ## Profilo dei costi e prestazioni
 
@@ -32,6 +32,10 @@ Dati: [base CSV](benchmarks/m6-base-profile.csv), [hardware CSV](benchmarks/m6-h
 
 Anteprime deterministiche del candidato: [scura](previews/m6-dark-120x40.svg), [chiara](previews/m6-light-120x40.svg), [ASCII senza colore](previews/m6-ascii-80x24.txt).
 
+## Regressione breve
+
+Sessione locale da 120 s misurati dopo 30 s di warmup sulla stessa build del candidato: CPU **0,3667%** di un core, RSS 4224→4480 KiB, range 256 KiB, massimo 5 thread, uscita 0 e terminale ripristinato. Tutti gli assert passano; non sostituisce la sessione di 8 ore. Dati: [JSON](benchmarks/m6-short-soak.json), [CSV](benchmarks/m6-short-soak.csv), [stato passato](benchmarks/m6-short-soak.status.json).
+
 ## Sessione di 8 ore
 
 Il runner è `tests/tui_soak.py --seconds 28800 --warmup 30`, PTY 120×40 truecolor, dashboard reale a 1 Hz, hardware/processi a 2 s. La copia del binario sotto `target/m6-soak/rtop` conserva l'eseguibile della sessione anche se una build successiva aggiorna `target/release/rtop`. Lo SHA della build finale misurata è `5762ad981a8b85de9b56f219bc8dbe02957d63ca5a69bd1379a2d0dde2c7b9e2`, registrato anche nel report di stato. La prima prova preliminare è stata interrotta dopo un rebuild per ripartire con la stessa build del candidato; non conta nella durata richiesta. I PID del report appartengono al namespace della prova.
@@ -50,13 +54,13 @@ Non vengono dichiarati consumo medio, stabilità di 8 ore o ripristino finale pr
 
 Versione candidata `0.1.0-rc.1`, licenza MIT aggiunta al repository, `publish = false`, metadati del repository e script `scripts/package_release.py`. Il candidato Linux contiene binario, note, configurazione, inventario e testi di licenza delle dipendenze host risolte. Archivio e checksum sono generati in `dist/` e ignorati da Git. Toolchain, target, libc, dipendenze dinamiche e SHA del binario sono registrati in `BUILD-INFO.json`.
 
-La CI Linux è configurata con azioni fissate a SHA ufficiali, permessi di lettura e credenziali Git non persistenti; esegue controlli, fixture, una sessione breve e packaging, caricando un artifact. Non pubblica tag o GitHub Releases. Il risultato del run remoto resta da verificare. Il pacchetto locale GNU x86_64 è costruito con glibc 2.43; non si estende questa compatibilità ad altri host. Contiene 75 dipendenze host risolte con inventario e testi di licenza. La verifica di estrazione, checksum archivio/binario, versione e avvio del binario estratto (`doctor` senza GPU e raccolta headless) è superata. Report: [pacchetto](benchmarks/m6-package-verification.json).
+La CI Linux è configurata con azioni fissate a SHA ufficiali, permessi di lettura e credenziali Git non persistenti; esegue controlli, fixture, una sessione breve e packaging, caricando un artifact. Non pubblica tag o GitHub Releases. La [CI remota sul candidato `73a6e29`](https://github.com/pascalbrax/rtop/actions/runs/37689198595) è conclusa con successo: controlli Rust, regressioni, stabilità breve, packaging e upload artifact. Evidenza: [stato CI e artifact](benchmarks/m6-ci.json). Questo non chiude la sessione locale di 8 ore. Il pacchetto locale GNU x86_64 è costruito con glibc 2.43; non si estende questa compatibilità ad altri host. Contiene 75 dipendenze host risolte con inventario e testi di licenza. Due packaging consecutivi degli stessi contenuti e della stessa build producono un checksum archivio identico; gli indirizzi ASLR di `ldd` sono esclusi dai metadati per non introdurre differenze spurie. La verifica di estrazione, checksum archivio/binario, versione e avvio del binario estratto (`doctor` senza GPU e raccolta headless) è superata. Report: [pacchetto](benchmarks/m6-package-verification.json).
 
 Nome già usato da altri monitor; il repository `pascalbrax/rtop` resta l'identità della distribuzione, senza pubblicazione omonima su crates.io. Licenze dei crate e notice vengono incluse senza distribuire driver proprietari opzionali. Metodo e installazione: [RELEASE.md](RELEASE.md).
 
 ## Attività ancora aperte
 
 - Esito della sessione reale di almeno 8 ore e revisione del report finale.
-- Prove visuali in emulatori grafici reali e risultato della CI remota.
+- Dettagli delle verifiche visuali su Windows Terminal/SSH (prova d’uso riferita dall’utente, versioni e singoli esiti non specificati); CI remota del candidato già superata.
 - Validazione/benchmark hardware M4, compresi i contatori Intel Arc mancanti sullo ZBook; AMD sospesa.
 - Tag e release finale dopo conclusione delle verifiche richieste.

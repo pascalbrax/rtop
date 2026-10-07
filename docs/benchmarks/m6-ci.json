@@ -1,0 +1,16 @@
+{
+  "run_id": 37689198595,
+  "commit": "73a6e297e6385f2df3e7c5d085c03775b0e58d67",
+  "status": "completed",
+  "conclusion": "success",
+  "url": "https://github.com/pascalbrax/rtop/actions/runs/37689198595",
+  "runner": "ubuntu-24.04",
+  "artifacts": [
+    {
+      "id": 11512597107,
+      "name": "rtop-linux-candidate",
+      "size_in_bytes": 1381649,
+      "expired": false
+    }
+  ]
+}

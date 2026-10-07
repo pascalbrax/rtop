@@ -1,0 +1,11 @@
+{
+  "state": "passed",
+  "updated_at_utc": "2026-10-07T21:24:08.634979+00:00",
+  "monitor_pid": 3,
+  "rtop_pid": 4,
+  "binary_sha256": "5762ad981a8b85de9b56f219bc8dbe02957d63ca5a69bd1379a2d0dde2c7b9e2",
+  "planned_measured_s": 120,
+  "warmup_s": 30,
+  "elapsed_s": 150.0023229829967,
+  "report_file": "docs/benchmarks/m6-short-soak.json"
+}
